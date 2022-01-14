@@ -13,7 +13,10 @@ do
 {
     var word = game.Try(Console.ReadLine()!);
     if (word is null)
+    {
+        Console.WriteLine("Wrong word!");
         continue;
+    }
     Console.CursorTop--;
     Console.Write($"{game.PossibleTries - game.RemainingTries} > ");
     foreach (var letter in word)
@@ -32,3 +35,5 @@ do
         break;
     }
 } while (game.RemainingTries > 0);
+
+Console.WriteLine($"The word was {game.SelectedWord}");

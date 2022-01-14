@@ -32,7 +32,7 @@ public class Game
 
     public Letter[]? Try(string word)
     {
-        if (RemainingTries <= 0 || word.Length != SelectedWord.Length)
+        if (RemainingTries <= 0 || word.Length != SelectedWord.Length || !_words[WordLength].Contains(word))
             return null;
 
         RemainingTries--;
