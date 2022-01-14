@@ -1,18 +1,24 @@
-﻿namespace Wordle.Core;
+﻿using System.Diagnostics;
+
+namespace Wordle.Core;
 public class Game
 {
-    public static readonly Dictionary<int, string[]> _words = new()
+    public static readonly Dictionary<int, string[]> _words;
+
+    static Game()
     {
-        [5] = new[]
-        {
-            "assis",
-            "ailes",
-            "sales",
-            "boire",
-            "bisou",
-            "salut",
-        },
-    };
+        using var http = new HttpClient();
+        _words = http.GetStringAsync(@"https://raw.githubusercontent.com/hbenbel/French-Dictionary/master/dictionary/dictionary.txt")
+            .GetAwaiter()
+            .GetResult()
+            .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
+            .Where([DebuggerStepThroughAttribute] static (word) => word.Length >= 3)
+            .GroupBy([DebuggerStepThroughAttribute] static (word) => word.Length)
+            .Select([DebuggerStepThroughAttribute] static (group) => (key: group.Key, words: group.ToArray()))
+            .Where([DebuggerStepThroughAttribute] static (group) => group.words.Length > 10)
+            .OrderBy([DebuggerStepThroughAttribute] static (group) => group.key)
+            .ToDictionary([DebuggerStepThroughAttribute] static (group) => group.key, [DebuggerStepThroughAttribute] static (group) => group.words);
+    }
 
     public static IEnumerable<int> ValideWordLength => _words.Keys;
 
