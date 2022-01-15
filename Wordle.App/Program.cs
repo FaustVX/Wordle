@@ -1,6 +1,7 @@
 ﻿using Wordle.Core;
 using static ConsoleMenu.Helpers;
 using System.Diagnostics;
+using static Wordle.App.Options;
 
 var game = Start();
 var wellPlacedLetters = new char?[game.WordLength];
@@ -27,16 +28,16 @@ do
         switch (letter)
         {
             case { IsWellPlaced: true }:
-                Write(letter.Char.ToString(), ConsoleColor.Green);
+                Write(letter.Char.ToString(), WellPlacedColor);
                 wellPlacedLetters[i] = letter.Char;
                 validLetters.Add(letter.Char);
                 break;
             case { IsValid: true }:
-                Write(letter.Char.ToString(), ConsoleColor.DarkYellow);
+                Write(letter.Char.ToString(), ValidColor);
                 validLetters.Add(letter.Char);
                 break;
             default:
-                Write(letter.Char.ToString(), ConsoleColor.Red);
+                Write(letter.Char.ToString(), InvalidColor);
                 invalidLetters.Add(letter.Char);
                 break;
         }
@@ -70,7 +71,7 @@ static string Input(char?[] wellPlacedLetters, IReadOnlyCollection<char> validLe
 
     foreach (var letter in wellPlacedLetters)
         if (letter is char c)
-            Write(c.ToString(), ConsoleColor.Green);
+            Write(c.ToString(), WellPlacedColor);
         else
             Console.CursorLeft++;
     do
@@ -85,7 +86,7 @@ static string Input(char?[] wellPlacedLetters, IReadOnlyCollection<char> validLe
                     currentLength--;
                     maxLength--;
                     Console.CursorLeft--;
-                    Write((wellPlacedLetters[currentLength] ?? ' ').ToString(), ConsoleColor.Green);
+                    Write((wellPlacedLetters[currentLength] ?? ' ').ToString(), WellPlacedColor);
                 }
                 continue;
             case ConsoleKey.LeftArrow:
@@ -117,11 +118,11 @@ static string Input(char?[] wellPlacedLetters, IReadOnlyCollection<char> validLe
             continue;
 
         if (letter.KeyChar == wellPlacedLetters[currentLength])
-            Write(letter.KeyChar.ToString(), ConsoleColor.Green);
+            Write(letter.KeyChar.ToString(), WellPlacedColor);
         else if (validLetters.Contains(letter.KeyChar))
-            Write(letter.KeyChar.ToString(), ConsoleColor.DarkYellow);
+            Write(letter.KeyChar.ToString(), ValidColor);
         else if (invalidLetters.Contains(letter.KeyChar))
-            Write(letter.KeyChar.ToString(), ConsoleColor.Red);
+            Write(letter.KeyChar.ToString(), InvalidColor);
         else
             Console.Write(letter.KeyChar);
 
