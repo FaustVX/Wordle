@@ -12,6 +12,7 @@ Console.WriteLine($"{game.WordLength} letters, {game.PossibleTries} tries");
 
 do
 {
+    Console.Write($"{game.RemainingTries - 1} > ");
     var word = game.Try(Input(wellPlacedLetters, validLetters, invalidLetters));
     if (word is null)
     {
@@ -61,19 +62,20 @@ static Game Start()
 
 static string Input(char?[] wellPlacedLetters, IReadOnlyCollection<char> validLetters, IReadOnlyCollection<char> invalidLetters)
 {
+    var lineSpacing = Console.CursorLeft;
+    var length = wellPlacedLetters.Length;
+    var word = new char[length];
+    var currentLength = 0;
+    var maxLength = 0;
+
     foreach (var letter in wellPlacedLetters)
         if (letter is char c)
             Write(c.ToString(), ConsoleColor.Green);
         else
             Console.CursorLeft++;
-
-    var length = wellPlacedLetters.Length;
-    var word = new char[length];
-    var currentLength = 0;
-    var maxLength = 0;
     do
     {
-        Console.CursorLeft = currentLength;
+        Console.CursorLeft = currentLength + lineSpacing;
         var letter = Console.ReadKey(intercept: true);
         switch (letter.Key)
         {
