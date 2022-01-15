@@ -15,7 +15,7 @@ do
     var word = game.Try(Input(wellPlacedLetters, validLetters, invalidLetters));
     if (word is null)
     {
-        Console.WriteLine("Wrong word!");
+        Console.WriteLine("Invalid word!");
         continue;
     }
     Console.CursorTop--;
@@ -41,7 +41,7 @@ do
         }
     }
     Console.WriteLine();
-    if (word.All([DebuggerStepThroughAttribute] static (letter) => letter.IsWellPlaced))
+    if (word.All([DebuggerStepThrough] static (letter) => letter.IsWellPlaced))
     {
         Console.WriteLine("Well played");
         break;
@@ -61,6 +61,12 @@ static Game Start()
 
 static string Input(char?[] wellPlacedLetters, IReadOnlyCollection<char> validLetters, IReadOnlyCollection<char> invalidLetters)
 {
+    foreach (var letter in wellPlacedLetters)
+        if (letter is char c)
+            Write(c.ToString(), ConsoleColor.Green);
+        else
+            Console.CursorLeft++;
+
     var length = wellPlacedLetters.Length;
     var word = new char[length];
     var currentLength = 0;
@@ -77,7 +83,7 @@ static string Input(char?[] wellPlacedLetters, IReadOnlyCollection<char> validLe
                     currentLength--;
                     maxLength--;
                     Console.CursorLeft--;
-                    Console.Write(' ');
+                    Write((wellPlacedLetters[currentLength] ?? ' ').ToString(), ConsoleColor.Green);
                 }
                 continue;
             case ConsoleKey.LeftArrow:
