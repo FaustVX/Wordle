@@ -36,6 +36,17 @@ public class Game
             return null;
 
         RemainingTries--;
-        return word.Select((l, i) => new Letter(l, SelectedWord.Contains(l), SelectedWord[i] == l)).ToArray();
+        var remainingLetters = SelectedWord.GroupBy(l => l).ToDictionary(g => g.Key, g => g.Count());
+        return word.Select((l, i) => new Letter(l, CheckRemainingLetter(l, remainingLetters), SelectedWord[i] == l)).ToArray();
+
+        static bool CheckRemainingLetter(char l, Dictionary<char, int> remainingLetters)
+        {
+            if (remainingLetters.TryGetValue(l, out var remaining) && remaining > 0)
+            {
+                remainingLetters[l]--;
+                return true;
+            }
+            return false;
+        }
     }
 }
