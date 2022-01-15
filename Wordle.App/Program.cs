@@ -23,9 +23,9 @@ do
     {
         Write(letter.Char.ToString(), letter switch
         {
-            { IsValid: false } => ConsoleColor.White,
-            { IsWellPlaced: false } => ConsoleColor.Yellow,
             { IsWellPlaced: true } => ConsoleColor.Green,
+            { IsValid: true } => ConsoleColor.DarkCyan,
+            _ => ConsoleColor.White,
         });
     }
     Console.WriteLine();
