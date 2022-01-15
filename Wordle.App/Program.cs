@@ -9,6 +9,9 @@ var length = Menu("Select word length", Game.ValideWordLength.ToArray(), [Debugg
 var tries = Menu("Select possible tries", Enumerable.Range(4, 10).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
 var game = new Game(length, tries);
 
+Console.Clear();
+Console.WriteLine($"{length} letters, {tries} tries");
+
 do
 {
     var word = game.Try(Console.ReadLine()!);
@@ -24,8 +27,8 @@ do
         Write(letter.Char.ToString(), letter switch
         {
             { IsWellPlaced: true } => ConsoleColor.Green,
-            { IsValid: true } => ConsoleColor.DarkCyan,
-            _ => ConsoleColor.White,
+            { IsValid: true } => ConsoleColor.DarkYellow,
+            _ => ConsoleColor.Red,
         });
     }
     Console.WriteLine();
