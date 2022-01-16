@@ -9,19 +9,19 @@ var validLetters = new HashSet<char>();
 var invalidLetters = new HashSet<char>();
 
 Console.Clear();
-Console.WriteLine($"{game.WordLength} letters, {game.PossibleTries} tries");
+WriteHeader(game, placedLetters, validLetters, invalidLetters);
 
 do
 {
-    Console.Write($"{game.RemainingTries - 1} > ");
-    var word = game.Try(Input(placedLetters, validLetters, invalidLetters));
+    Console.Write($"{game.RemainingTries - 1}: ");
+    var word = game.Try(Input(game, placedLetters, validLetters, invalidLetters));
     if (word is null)
     {
         Console.WriteLine("Invalid word!");
         continue;
     }
     Console.CursorTop--;
-    Console.Write($"{game.RemainingTries} > ");
+    Console.Write($"{game.RemainingTries}> ");
     for (int i = 0; i < word.Length; i++)
     {
         var letter = word[i];
@@ -53,6 +53,18 @@ do
 
 Console.WriteLine($"The word was {game.SelectedWord}");
 
+static void WriteHeader(Game game, (char? wellPlaced, HashSet<char>? invalid)[] placedLetters, IReadOnlyCollection<char> validLetters, IReadOnlyCollection<char> invalidLetters)
+{
+    Console.Write($"{game.WordLength} letters, {game.PossibleTries} tries, ");
+    for (var letter = 'a'; letter <= 'z'; letter++)
+        Write(letter, placedLetters.Any(c => (c.wellPlaced ?? '\0') == letter) ? WellPlacedColor
+                    : validLetters.Contains(letter) ? ValidColor
+                    : invalidLetters.Contains(letter) ? InvalidColor
+                    : Console.ForegroundColor);
+
+    Console.WriteLine();
+}
+
 static Game Start()
 {
     Console.WriteLine("Welcome to Wordle");
@@ -62,13 +74,17 @@ static Game Start()
     return new Game(length, tries);
 }
 
-static string Input((char? wellPlaced, HashSet<char>? invalid)[] placedLetters, IReadOnlyCollection<char> validLetters, IReadOnlyCollection<char> invalidLetters)
+static string Input(Game game, (char? wellPlaced, HashSet<char>? invalid)[] placedLetters, IReadOnlyCollection<char> validLetters, IReadOnlyCollection<char> invalidLetters)
 {
-    var lineSpacing = Console.CursorLeft;
+    (var lineSpacing, Console.CursorLeft) = (Console.CursorLeft, 0);
+    (var top, Console.CursorTop) = (Console.CursorTop, 0);
     var length = placedLetters.Length;
     var word = new char[length];
     var currentLength = 0;
     var maxLength = 0;
+
+    WriteHeader(game, placedLetters, validLetters, invalidLetters);
+    Console.SetCursorPosition(lineSpacing, top);
 
     foreach (var letter in placedLetters)
         if (letter is (char c, _))
@@ -120,19 +136,17 @@ static string Input((char? wellPlaced, HashSet<char>? invalid)[] placedLetters, 
 
         if (letter.KeyChar == placedLetters[currentLength].wellPlaced)
             Write(letter.KeyChar, WellPlacedColor);
+        else if (placedLetters[currentLength].invalid?.Contains(letter.KeyChar) ?? false)
+            Write(letter.KeyChar, InvalidColor, AlreadyWellPlacedColor);
         else if (placedLetters[currentLength].wellPlaced is char)
-            if (placedLetters[currentLength].invalid?.Contains(letter.KeyChar) ?? false)
-                Write(letter.KeyChar, InvalidColor, AlreadyWellPlacedColor);
-            else if (validLetters.Contains(letter.KeyChar))
+            if (validLetters.Contains(letter.KeyChar))
                 Write(letter.KeyChar, ValidColor, AlreadyWellPlacedColor);
             else if (invalidLetters.Contains(letter.KeyChar))
                 Write(letter.KeyChar, InvalidColor);
             else
                 Write(letter.KeyChar, Console.ForegroundColor, AlreadyWellPlacedColor);
         else
-            if (placedLetters[currentLength].invalid?.Contains(letter.KeyChar) ?? false)
-                Write(letter.KeyChar, InvalidColor, AlreadyWellPlacedColor);
-            else if (validLetters.Contains(letter.KeyChar))
+            if (validLetters.Contains(letter.KeyChar))
                 Write(letter.KeyChar, ValidColor);
             else if (invalidLetters.Contains(letter.KeyChar))
                 Write(letter.KeyChar, InvalidColor);
