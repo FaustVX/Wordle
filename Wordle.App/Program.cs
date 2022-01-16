@@ -1,4 +1,4 @@
-﻿using Wordle.Core;
+using Wordle.Core;
 using static ConsoleMenu.Helpers;
 using System.Diagnostics;
 using static Wordle.App.Options;
@@ -118,6 +118,15 @@ static string Input(Game game)
             case ConsoleKey.Enter:
                 if (currentLength == length)
                 {
+                    var isUsefulWord = false;
+                    for (var i = 0; !isUsefulWord && i < word.Length; i++)
+                    {
+                        var l = word[i];
+                        if (game.IsValidAtPos(l, i) is UnknownLetter or (ValidLetter { AlreadyWellPlacedLetter: false } and not WellPlacedLetter))
+                            isUsefulWord = true;
+                    }
+                    if (!isUsefulWord)
+                        continue;
                     Console.WriteLine();
                     return new(word);
                 }
