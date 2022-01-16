@@ -28,8 +28,22 @@ public class Game
     public string SelectedWord { get; }
     public int RemainingTries { get; private set; }
 
+    public (char? wellPlaced, HashSet<char>? invalid)[] PlacedLetters { get; }
+
+    private readonly HashSet<char> validLetters = new();
+    public IReadOnlyCollection<char> ValidLetters => validLetters;
+
+    private readonly HashSet<char> invalidLetters = new();
+    public IReadOnlyCollection<char> InvalidLetters => invalidLetters;
+
     public Game(int wordLength, int possibleTries)
-        => (WordLength, PossibleTries, RemainingTries, SelectedWord) = (wordLength, possibleTries, possibleTries, Words[wordLength][new Random().Next(Words[wordLength].Length)]);
+    {
+        WordLength = wordLength;
+        PossibleTries = possibleTries;
+        RemainingTries = PossibleTries;
+        PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
+        SelectedWord = Words[WordLength][new Random().Next(Words[WordLength].Length)];
+    }
 
     public Letter[]? Try(string word)
     {
@@ -49,7 +63,27 @@ public class Game
 
         for (int i = 0; i < result.Length; i++)
             if (word[i] != sanitizedWord[i])
+            {
                 result[i] = new(word[i], CheckRemainingLetter(word[i], remainingLetters), false);
+            }
+
+        for (int i = 0; i < result.Length; i++)
+        {
+            switch (result[i])
+            {
+                case { IsWellPlaced: true, Char: var c }:
+                    PlacedLetters[i].wellPlaced = c;
+                    validLetters.Add(c);
+                    break;
+                case { IsValid: true, Char: var c }:
+                    validLetters.Add(c);
+                    (PlacedLetters[i].invalid ??= new()).Add(c);
+                    break;
+                case { Char: var c }:
+                    invalidLetters.Add(c);
+                    break;
+            }
+        }
 
         return result;
 
@@ -80,5 +114,27 @@ public class Game
                 .Replace('ü', 'u')
                 .Replace('ù', 'u')
                 .Replace('ç', 'c');
+    }
+
+    public LetterPlacement IsValidAtPos(char letter, int index)
+    {
+        if (letter == PlacedLetters[index].wellPlaced)
+            return new WellPlacedLetter();
+        else if (PlacedLetters[index].invalid?.Contains(letter) ?? false)
+            return new InvalidLetter() { AlreadyWellPlacedLetter = true };
+        else if (PlacedLetters[index].wellPlaced is char)
+            if (ValidLetters.Contains(letter))
+                return new ValidLetter() { AlreadyWellPlacedLetter = true };
+            else if (InvalidLetters.Contains(letter))
+                return new InvalidLetter();
+            else
+                return new UnknownLetter() { AlreadyWellPlacedLetter = true };
+        else
+            if (ValidLetters.Contains(letter))
+                return new ValidLetter();
+            else if (InvalidLetters.Contains(letter))
+                return new InvalidLetter();
+            else
+                return new UnknownLetter();
     }
 }
