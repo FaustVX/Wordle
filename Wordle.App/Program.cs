@@ -3,7 +3,7 @@ using static ConsoleMenu.Helpers;
 using System.Diagnostics;
 using static Wordle.App.Options;
 
-for (var game = Start(); true; game = new(game.WordLength, game.PossibleTries))
+for (var game = Start(); true; game = game.Recreate())
 {
     Console.Clear();
     WriteHeader(game);

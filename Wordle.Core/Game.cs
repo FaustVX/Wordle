@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace Wordle.Core;
 public class Game
@@ -44,6 +44,9 @@ public class Game
         PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
         SelectedWord = Words[WordLength][new Random().Next(Words[WordLength].Length)];
     }
+
+    public Game Recreate()
+        => new(WordLength, PossibleTries);
 
     public Letter[]? Try(string word)
     {
