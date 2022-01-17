@@ -1,14 +1,15 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Wordle.Core;
 public class Game
 {
-    public static readonly Dictionary<int, string[]> Words;
+    private static readonly Dictionary<int, string[]> _wordLists;
+    public static IEnumerable<int> ValideWordLength => _wordLists.Keys;
 
     static Game()
     {
         using var http = new HttpClient();
-        Words = http.GetStringAsync(@"https://raw.githubusercontent.com/hbenbel/French-Dictionary/master/dictionary/dictionary.txt")
+        _wordLists = http.GetStringAsync(@"https://raw.githubusercontent.com/hbenbel/French-Dictionary/master/dictionary/dictionary.txt")
             .GetAwaiter()
             .GetResult()
             .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
@@ -21,14 +22,14 @@ public class Game
             .ToDictionary([DebuggerStepThrough] static (group) => group.key, [DebuggerStepThrough] static (group) => group.words);
     }
 
-    public static IEnumerable<int> ValideWordLength => Words.Keys;
-
     public int WordLength { get; }
     public int PossibleTries { get; }
     public string SelectedWord { get; }
+    public string SanitizedWord { get; }
+    public IReadOnlyList<string> WordList { get; }
     public int RemainingTries { get; private set; }
-
     public (char? wellPlaced, HashSet<char>? invalid)[] PlacedLetters { get; }
+    public bool IsRandomWord { get; }
 
     private readonly HashSet<char> validLetters = new();
     public IReadOnlyCollection<char> ValidLetters => validLetters;
@@ -36,42 +37,46 @@ public class Game
     private readonly HashSet<char> invalidLetters = new();
     public IReadOnlyCollection<char> InvalidLetters => invalidLetters;
 
-    public Game(int wordLength, int possibleTries)
+    public Game(int wordLength, int possibleTries, bool randomWord)
     {
+        IsRandomWord = randomWord;
         WordLength = wordLength;
         PossibleTries = possibleTries;
         RemainingTries = PossibleTries;
         PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
-        SelectedWord = Words[WordLength][new Random().Next(Words[WordLength].Length)];
+        WordList = _wordLists[WordLength];
+        SelectedWord = IsRandomWord
+            ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(rng => (char)rng.Next('a', 'z' + 1)))
+            : WordList[new Random().Next(WordList.Count)];
+        SanitizedWord = Sanitize(SelectedWord);
     }
 
     public Game Recreate()
-        => new(WordLength, PossibleTries);
+        => new(WordLength, PossibleTries, IsRandomWord);
+
+    public bool IsPossibleWord(string word)
+        => RemainingTries > 0 && word.Length == SanitizedWord.Length && (IsRandomWord || WordList.Select(Sanitize).Contains(word)) && word.Skip(1).Any(l => l != word[0]);
 
     public Letter[]? Try(string word)
     {
-        var sanitizedWord = Sanitize(SelectedWord);
-        if (RemainingTries <= 0 || word.Length != sanitizedWord.Length || !Words[WordLength].Select(Sanitize).Contains(word))
+        if (!IsPossibleWord(Sanitize(word)))
             return null;
 
         RemainingTries--;
-        var remainingLetters = sanitizedWord.GroupBy(l => l).ToDictionary(g => g.Key, g => g.Count());
-        var result = new Letter[sanitizedWord.Length];
+        var remainingLetters = SanitizedWord.GroupBy(static l => l).ToDictionary(g => g.Key, g => g.Count());
+        var result = new Letter[SanitizedWord.Length];
         for (int i = 0; i < result.Length; i++)
-            if (word[i] == sanitizedWord[i])
+            if (word[i] == SanitizedWord[i])
             {
                 result[i] = new(word[i], true, true);
                 remainingLetters[word[i]]--;
             }
 
         for (int i = 0; i < result.Length; i++)
-            if (word[i] != sanitizedWord[i])
-            {
+            if (word[i] != SanitizedWord[i])
                 result[i] = new(word[i], CheckRemainingLetter(word[i], remainingLetters), false);
-            }
 
         for (int i = 0; i < result.Length; i++)
-        {
             switch (result[i])
             {
                 case { IsWellPlaced: true, Char: var c }:
@@ -86,7 +91,6 @@ public class Game
                     invalidLetters.Add(c);
                     break;
             }
-        }
 
         return result;
 
@@ -99,25 +103,25 @@ public class Game
             }
             return false;
         }
-
-        static string Sanitize(string word)
-            => word.ToLower()
-                .Replace('â', 'a')
-                .Replace('à', 'a')
-                .Replace('ä', 'a')
-                .Replace('é', 'e')
-                .Replace('è', 'e')
-                .Replace('ê', 'e')
-                .Replace('ë', 'e')
-                .Replace('ï', 'i')
-                .Replace('î', 'i')
-                .Replace('ô', 'o')
-                .Replace('ö', 'o')
-                .Replace('û', 'u')
-                .Replace('ü', 'u')
-                .Replace('ù', 'u')
-                .Replace('ç', 'c');
     }
+
+    private static string Sanitize(string word)
+        => word.ToLower()
+            .Replace('â', 'a')
+            .Replace('à', 'a')
+            .Replace('ä', 'a')
+            .Replace('é', 'e')
+            .Replace('è', 'e')
+            .Replace('ê', 'e')
+            .Replace('ë', 'e')
+            .Replace('ï', 'i')
+            .Replace('î', 'i')
+            .Replace('ô', 'o')
+            .Replace('ö', 'o')
+            .Replace('û', 'u')
+            .Replace('ü', 'u')
+            .Replace('ù', 'u')
+            .Replace('ç', 'c');
 
     public LetterPlacement IsValidAtPos(char letter, int index)
     {
@@ -134,10 +138,10 @@ public class Game
                 return new UnknownLetter() { AlreadyWellPlacedLetter = true };
         else
             if (ValidLetters.Contains(letter))
-                return new ValidLetter();
-            else if (InvalidLetters.Contains(letter))
-                return new InvalidLetter();
-            else
-                return new UnknownLetter();
+            return new ValidLetter();
+        else if (InvalidLetters.Contains(letter))
+            return new InvalidLetter();
+        else
+            return new UnknownLetter();
     }
 }

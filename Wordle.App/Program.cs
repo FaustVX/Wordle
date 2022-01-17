@@ -1,4 +1,4 @@
-using Wordle.Core;
+﻿using Wordle.Core;
 using static ConsoleMenu.Helpers;
 using System.Diagnostics;
 using static Wordle.App.Options;
@@ -52,6 +52,8 @@ for (var game = Start(); true; game = game.Recreate())
 static void WriteHeader(Game game)
 {
     Console.Write($"{game.WordLength} letters, {game.PossibleTries} tries, ");
+    if (game.IsRandomWord)
+        Console.Write("Random Word, ");
     for (var letter = 'a'; letter <= 'z'; letter++)
         Write(letter, game.PlacedLetters.Any(c => (c.wellPlaced ?? '\0') == letter) ? WellPlacedColor
                     : game.ValidLetters.Contains(letter) ? ValidColor
@@ -65,7 +67,8 @@ static Game Start()
 
     var length = Menu("Select word length", Game.ValideWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
-    return new(length, tries);
+    var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
+    return new(length, tries, isRandom);
 }
 
 static string Input(Game game)
@@ -115,7 +118,7 @@ static string Input(Game game)
                 }
                 continue;
             case ConsoleKey.Enter:
-                if (currentLength == length)
+                if (currentLength == length && game.IsPossibleWord(new(word)))
                 {
                     var isUsefulWord = false;
                     for (var i = 0; !isUsefulWord && i < word.Length; i++)
