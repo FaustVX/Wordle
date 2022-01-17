@@ -45,8 +45,9 @@ for (var game = Start(); true; game = game.Recreate())
     } while (game.RemainingTries > 0);
 
     Console.WriteLine($"The word was {game.SelectedWord}");
-    Console.WriteLine("Press any key to restart a game");
-    Console.ReadLine();
+    Console.WriteLine("Press any key to restart a game, or Esc to customize");
+    if (Console.ReadKey().Key is ConsoleKey.Escape)
+        game = Start();
 }
 
 static void WriteHeader(Game game)
@@ -118,7 +119,7 @@ static string Input(Game game)
                 }
                 continue;
             case ConsoleKey.Enter:
-                if (currentLength == length && game.IsPossibleWord(new(word)))
+                if (maxLength == length && game.IsPossibleWord(new(word)))
                 {
                     var isUsefulWord = false;
                     for (var i = 0; !isUsefulWord && i < word.Length; i++)
