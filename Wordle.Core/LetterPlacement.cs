@@ -11,11 +11,14 @@ public abstract class KnownLetter : LetterPlacement
 public sealed class UnknownLetter : LetterPlacement
 { }
 
-public class ValidLetter : KnownLetter
+public abstract class ValidLetter : KnownLetter
 { }
 
 public sealed class InvalidLetter : KnownLetter
 { }
 
 public sealed class WellPlacedLetter : ValidLetter
+{ }
+
+public sealed class WronglyPlacedLetter : ValidLetter
 { }

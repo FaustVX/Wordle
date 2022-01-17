@@ -125,7 +125,7 @@ static string Input(Game game)
                     for (var i = 0; !isUsefulWord && i < word.Length; i++)
                     {
                         var l = word[i];
-                        if (game.IsValidAtPos(l, i) is UnknownLetter or (ValidLetter { AlreadyWellPlacedLetter: false } and not WellPlacedLetter))
+                        if (game.IsValidAtPos(l, i) is UnknownLetter or WronglyPlacedLetter { AlreadyWellPlacedLetter: false })
                             isUsefulWord = true;
                     }
                     if (!isUsefulWord)
