@@ -7,6 +7,7 @@ for (var game = Start(); true; game = new(game.WordLength, game.PossibleTries))
 {
     Console.Clear();
     WriteHeader(game);
+    Console.WriteLine();
 
     do
     {
@@ -56,8 +57,6 @@ static void WriteHeader(Game game)
                     : game.ValidLetters.Contains(letter) ? ValidColor
                     : game.InvalidLetters.Contains(letter) ? InvalidColor
                     : Console.ForegroundColor);
-
-    Console.WriteLine();
 }
 
 static Game Start()
