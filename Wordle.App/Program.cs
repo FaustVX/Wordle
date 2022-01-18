@@ -12,7 +12,10 @@ for (var game = Start(); true; game = game.Recreate())
     do
     {
         Console.Write($"{game.RemainingTries - 1}: ");
-        var word = game.Try(Input(game));
+        var input = Input(game);
+        if (input is null)
+            break;
+        var word = game.Try(input);
         if (word is null)
         {
             Console.WriteLine("Invalid word!");
@@ -72,7 +75,7 @@ static Game Start()
     return new(length, tries, isRandom);
 }
 
-static string Input(Game game)
+static string? Input(Game game)
 {
     (var lineSpacing, Console.CursorLeft) = (Console.CursorLeft, 0);
     (var top, Console.CursorTop) = (Console.CursorTop, 0);
@@ -123,17 +126,17 @@ static string Input(Game game)
                 {
                     var isUsefulWord = false;
                     for (var i = 0; !isUsefulWord && i < word.Length; i++)
-                    {
-                        var l = word[i];
-                        if (game.IsValidAtPos(l, i) is UnknownLetter or WronglyPlacedLetter { AlreadyWellPlacedLetter: false })
+                        if (game.IsValidAtPos(word[i], i) is UnknownLetter or WronglyPlacedLetter { AlreadyWellPlacedLetter: false })
                             isUsefulWord = true;
-                    }
                     if (!isUsefulWord)
                         continue;
                     Console.WriteLine();
                     return new(word);
                 }
                 continue;
+            case ConsoleKey.Escape:
+                Console.CursorLeft = 0;
+                return null;
         }
 
         if (currentLength >= length)
