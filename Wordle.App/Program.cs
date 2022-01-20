@@ -120,6 +120,32 @@ static string? Input(Game game)
                     currentPosition++;
                 }
                 continue;
+            case ConsoleKey.UpArrow:
+                {
+                    var startLetter = hasChar[currentPosition] ? word[currentPosition]
+                        : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
+                        : 'z';
+                    do
+                    {
+                        startLetter = (char)((startLetter + 1 - 'a') % 26 + 'a');
+                    } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
+                    WriteChar(startLetter, ref currentPosition, game, word, hasChar);
+                    currentPosition--;
+                }
+                continue;
+            case ConsoleKey.DownArrow:
+                {
+                    var startLetter = hasChar[currentPosition] ? word[currentPosition]
+                        : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
+                        : 'a';
+                    do
+                    {
+                        startLetter = (char)((startLetter + 25 - 'a') % 26 + 'a');
+                    } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
+                    WriteChar(startLetter, ref currentPosition, game, word, hasChar);
+                    currentPosition--;
+                }
+                continue;
             case ConsoleKey.Enter:
                 if (game.IsPossibleWord(new(word)))
                 {
@@ -144,36 +170,41 @@ static string? Input(Game game)
         if (currentPosition >= length || letter.KeyChar is not (>= 'a' and <= 'z'))
             continue;
 
-        switch (game.IsValidAtPos(letter.KeyChar, currentPosition))
-        {
-            case WellPlacedLetter { AlreadyWellPlacedLetter: true }:
-                Write(letter.KeyChar, WellPlacedColor, AlreadyWellPlacedColor);
-                break;
-            case ValidLetter { AlreadyWellPlacedLetter: true }:
-                Write(letter.KeyChar, ValidColor, AlreadyWellPlacedColor);
-                break;
-            case InvalidLetter { AlreadyWellPlacedLetter: true }:
-                Write(letter.KeyChar, InvalidColor, AlreadyWellPlacedColor);
-                break;
-            case UnknownLetter { AlreadyWellPlacedLetter: true }:
-                Write(letter.KeyChar, Console.ForegroundColor, AlreadyWellPlacedColor);
-                break;
-            case WellPlacedLetter:
-                Write(letter.KeyChar, WellPlacedColor);
-                break;
-            case ValidLetter:
-                Write(letter.KeyChar, ValidColor);
-                break;
-            case InvalidLetter:
-                Write(letter.KeyChar, InvalidColor);
-                break;
-            case UnknownLetter:
-                Write(letter.KeyChar, Console.ForegroundColor);
-                break;
-        }
+        WriteChar(letter.KeyChar, ref currentPosition, game, word, hasChar);
 
-        word[currentPosition] = letter.KeyChar;
-        hasChar[currentPosition] = true;
-        currentPosition++;
+        static void WriteChar(char letter, ref int currentPosition, Game game, char[] word, bool[] hasChar)
+        {
+            switch (game.IsValidAtPos(letter, currentPosition))
+            {
+                case WellPlacedLetter { AlreadyWellPlacedLetter: true }:
+                    Write(letter, WellPlacedColor, AlreadyWellPlacedColor);
+                    break;
+                case ValidLetter { AlreadyWellPlacedLetter: true }:
+                    Write(letter, ValidColor, AlreadyWellPlacedColor);
+                    break;
+                case InvalidLetter { AlreadyWellPlacedLetter: true }:
+                    Write(letter, InvalidColor, AlreadyWellPlacedColor);
+                    break;
+                case UnknownLetter { AlreadyWellPlacedLetter: true }:
+                    Write(letter, Console.ForegroundColor, AlreadyWellPlacedColor);
+                    break;
+                case WellPlacedLetter:
+                    Write(letter, WellPlacedColor);
+                    break;
+                case ValidLetter:
+                    Write(letter, ValidColor);
+                    break;
+                case InvalidLetter:
+                    Write(letter, InvalidColor);
+                    break;
+                case UnknownLetter:
+                    Write(letter, Console.ForegroundColor);
+                    break;
+            }
+
+            word[currentPosition] = letter;
+            hasChar[currentPosition] = true;
+            currentPosition++;
+        }
     } while (true);
 }
