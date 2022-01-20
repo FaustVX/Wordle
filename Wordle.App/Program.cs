@@ -81,8 +81,8 @@ static string? Input(Game game)
     (var top, Console.CursorTop) = (Console.CursorTop, 0);
     var length = game.WordLength;
     var word = new char[length];
-    var currentLength = 0;
-    var maxLength = 0;
+    var hasChar = new bool[length];
+    var currentPosition = 0;
 
     WriteHeader(game);
     Console.SetCursorPosition(lineSpacing, top);
@@ -94,41 +94,43 @@ static string? Input(Game game)
             Console.CursorLeft++;
     do
     {
-        Console.CursorLeft = currentLength + lineSpacing;
+        Console.CursorLeft = currentPosition + lineSpacing;
         var letter = Console.ReadKey(intercept: true);
         switch (letter.Key)
         {
             case ConsoleKey.Backspace:
-                if (currentLength > 0)
+                if (currentPosition > 0)
                 {
-                    currentLength--;
-                    maxLength--;
+                    currentPosition--;
+                    hasChar[currentPosition] = false;
                     Console.CursorLeft--;
-                    Write(game.PlacedLetters[currentLength].wellPlaced ?? ' ', WellPlacedColor);
+                    Write(game.PlacedLetters[currentPosition].wellPlaced ?? ' ', WellPlacedColor);
+                    Console.CursorLeft--;
                 }
                 continue;
             case ConsoleKey.LeftArrow:
-                if (currentLength > 0)
+                if (currentPosition > 0)
                 {
-                    currentLength--;
-                    Console.CursorLeft--;
+                    currentPosition--;
                 }
                 continue;
             case ConsoleKey.RightArrow:
-                if (currentLength < maxLength)
+                if (currentPosition < length)
                 {
-                    currentLength++;
-                    Console.CursorLeft++;
+                    currentPosition++;
                 }
                 continue;
             case ConsoleKey.Enter:
-                if (maxLength == length && game.IsPossibleWord(new(word)))
+                if (game.IsPossibleWord(new(word)))
                 {
-                    var isUsefulWord = false;
-                    for (var i = 0; !isUsefulWord && i < word.Length; i++)
-                        if (game.IsValidAtPos(word[i], i) is UnknownLetter or WronglyPlacedLetter { AlreadyWellPlacedLetter: false })
-                            isUsefulWord = true;
-                    if (!isUsefulWord)
+                    var (isUsefulWord, containsSpace) = (false, false);
+                    for (var i = 0; (!isUsefulWord || containsSpace) && i < word.Length; i++)
+                    {
+                        containsSpace = hasChar[i] is false;
+                        isUsefulWord = game.IsValidAtPos(word[i], i) is UnknownLetter or WronglyPlacedLetter { AlreadyWellPlacedLetter: false };
+                    }
+
+                    if (!isUsefulWord || containsSpace)
                         continue;
                     Console.WriteLine();
                     return new(word);
@@ -139,12 +141,10 @@ static string? Input(Game game)
                 return null;
         }
 
-        if (currentLength >= length)
-            continue;
-        if (letter.KeyChar is not (>= 'a' and <= 'z'))
+        if (currentPosition >= length || letter.KeyChar is not (>= 'a' and <= 'z'))
             continue;
 
-        switch (game.IsValidAtPos(letter.KeyChar, currentLength))
+        switch (game.IsValidAtPos(letter.KeyChar, currentPosition))
         {
             case WellPlacedLetter { AlreadyWellPlacedLetter: true }:
                 Write(letter.KeyChar, WellPlacedColor, AlreadyWellPlacedColor);
@@ -172,8 +172,8 @@ static string? Input(Game game)
                 break;
         }
 
-        word[currentLength] = letter.KeyChar;
-        currentLength++;
-        maxLength++;
+        word[currentPosition] = letter.KeyChar;
+        hasChar[currentPosition] = true;
+        currentPosition++;
     } while (true);
 }
