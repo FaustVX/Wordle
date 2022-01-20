@@ -11,7 +11,6 @@ for (var game = Start(); true; game = game.Recreate())
 
     do
     {
-        Console.Write($"{game.RemainingTries - 1}: ");
         var input = Input(game);
         if (input is null)
             break;
@@ -77,7 +76,6 @@ static Game Start()
 
 static string? Input(Game game)
 {
-    (var lineSpacing, Console.CursorLeft) = (Console.CursorLeft, 0);
     (var top, Console.CursorTop) = (Console.CursorTop, 0);
     var length = game.WordLength;
     var word = new char[length];
@@ -85,16 +83,10 @@ static string? Input(Game game)
     var currentPosition = 0;
 
     WriteHeader(game);
-    Console.SetCursorPosition(lineSpacing, top);
-
-    foreach (var letter in game.PlacedLetters)
-        if (letter is (char c, _))
-            Write(c, WellPlacedColor);
-        else
-            Console.CursorLeft++;
+    Console.SetCursorPosition(0, top);
     do
     {
-        Console.CursorLeft = currentPosition + lineSpacing;
+        WriteWord(word, hasChar, game, currentPosition);
         var letter = Console.ReadKey(intercept: true);
         switch (letter.Key)
         {
@@ -103,56 +95,25 @@ static string? Input(Game game)
                 {
                     currentPosition--;
                     hasChar[currentPosition] = false;
-                    Console.CursorLeft--;
-                    Write(game.PlacedLetters[currentPosition].wellPlaced ?? ' ', WellPlacedColor);
-                    Console.CursorLeft--;
                 }
                 continue;
             case ConsoleKey.Delete:
                 if (currentPosition < length)
-                {
                     hasChar[currentPosition] = false;
-                    Write(game.PlacedLetters[currentPosition].wellPlaced ?? ' ', WellPlacedColor);
-                    Console.CursorLeft--;
-                }
                 continue;
             case ConsoleKey.LeftArrow:
                 if (currentPosition > 0)
-                {
                     currentPosition--;
-                }
                 continue;
             case ConsoleKey.RightArrow:
                 if (currentPosition < length)
-                {
                     currentPosition++;
-                }
                 continue;
             case ConsoleKey.UpArrow:
-                {
-                    var startLetter = hasChar[currentPosition] ? word[currentPosition]
-                        : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
-                        : 'z';
-                    do
-                    {
-                        startLetter = (char)((startLetter + 1 - 'a') % 26 + 'a');
-                    } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
-                    WriteChar(startLetter, ref currentPosition, game, word, hasChar);
-                    currentPosition--;
-                }
+                CycleLetter(word, hasChar, currentPosition, game, +1);
                 continue;
             case ConsoleKey.DownArrow:
-                {
-                    var startLetter = hasChar[currentPosition] ? word[currentPosition]
-                        : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
-                        : 'a';
-                    do
-                    {
-                        startLetter = (char)((startLetter + (26 - 1) - 'a') % 26 + 'a');
-                    } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
-                    WriteChar(startLetter, ref currentPosition, game, word, hasChar);
-                    currentPosition--;
-                }
+                CycleLetter(word, hasChar, currentPosition, game, -1);
                 continue;
             case ConsoleKey.Enter:
                 if (game.IsPossibleWord(new(word)))
@@ -178,9 +139,46 @@ static string? Input(Game game)
         if (currentPosition >= length || letter.KeyChar is not (>= 'a' and <= 'z'))
             continue;
 
-        WriteChar(letter.KeyChar, ref currentPosition, game, word, hasChar);
+        word[currentPosition] = letter.KeyChar;
+        hasChar[currentPosition] = true;
+        currentPosition++;
 
-        static void WriteChar(char letter, ref int currentPosition, Game game, char[] word, bool[] hasChar)
+        static void CycleLetter(char[] word, bool[] hasChar, int currentPosition, Game game, int offset)
+        {
+                var startLetter = hasChar[currentPosition] ? word[currentPosition]
+                    : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
+                    : offset > 0 ? 'z' : 'a';
+                do
+                {
+                    startLetter = (char)((startLetter + 26 + offset - 'a') % 26 + 'a');
+                } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
+                word[currentPosition] = startLetter;
+                hasChar[currentPosition] = true;
+        }
+
+        static void WriteWord(char[] word, bool[] hasChar, Game game, int currentPosition)
+        {
+            Console.CursorVisible = false;
+            Console.CursorLeft = 0;
+            Console.Write($"{game.RemainingTries - 1}: ");
+            var lineSpacing = Console.CursorLeft;
+            for (int i = 0; i < word.Length; i++)
+            {
+                if (!hasChar[i] && game.PlacedLetters[i].wellPlaced is char c)
+                {
+                    word[i] = c;
+                    hasChar[i] = true;
+                }
+                if (hasChar[i])
+                    WriteChar(word[i], i, game);
+                else
+                    Console.Write(' ');
+            }
+            Console.CursorLeft = lineSpacing + currentPosition;
+            Console.CursorVisible = true;
+        }
+
+        static void WriteChar(char letter, int currentPosition, Game game)
         {
             switch (game.IsValidAtPos(letter, currentPosition))
             {
@@ -209,10 +207,6 @@ static string? Input(Game game)
                     Write(letter, Console.ForegroundColor);
                     break;
             }
-
-            word[currentPosition] = letter;
-            hasChar[currentPosition] = true;
-            currentPosition++;
         }
     } while (true);
 }
