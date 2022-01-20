@@ -108,6 +108,14 @@ static string? Input(Game game)
                     Console.CursorLeft--;
                 }
                 continue;
+            case ConsoleKey.Delete:
+                if (currentPosition < length)
+                {
+                    hasChar[currentPosition] = false;
+                    Write(game.PlacedLetters[currentPosition].wellPlaced ?? ' ', WellPlacedColor);
+                    Console.CursorLeft--;
+                }
+                continue;
             case ConsoleKey.LeftArrow:
                 if (currentPosition > 0)
                 {
@@ -140,7 +148,7 @@ static string? Input(Game game)
                         : 'a';
                     do
                     {
-                        startLetter = (char)((startLetter + 25 - 'a') % 26 + 'a');
+                        startLetter = (char)((startLetter + (26 - 1) - 'a') % 26 + 'a');
                     } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
                     WriteChar(startLetter, ref currentPosition, game, word, hasChar);
                     currentPosition--;
