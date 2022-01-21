@@ -50,11 +50,14 @@ for (var game = Start(); true; game = game.Recreate())
     Console.Write($"The word was ");
     (var foreground, Console.ForegroundColor) = (Console.ForegroundColor, ConsoleColor.Blue);
     Console.WriteLine(game.SelectedWord);
-    Console.ForegroundColor = ConsoleColor.Yellow;
-    Console.Write("Searching definition on '1mot.net'");
-    (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
-    Console.ForegroundColor = ConsoleColor.DarkBlue;
-    Console.WriteLine(await GetDefinition(game.SelectedWord, minLength));
+    if (!game.IsRandomWord)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.Write("Searching definition on '1mot.net'");
+        (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
+        Console.ForegroundColor = ConsoleColor.DarkBlue;
+        Console.WriteLine(await GetDefinition(game.SelectedWord, minLength));
+    }
     Console.ForegroundColor = foreground;
     Console.WriteLine("Press any key to restart a game, or Esc to customize");
     if (Console.ReadKey().Key is ConsoleKey.Escape)
