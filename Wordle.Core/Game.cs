@@ -107,21 +107,19 @@ public class Game
     {
         if (letter == PlacedLetters[index].wellPlaced)
             return new WellPlacedLetter();
+        else if (InvalidLetters.Contains(letter))
+            return new InvalidLetter();
         else if (PlacedLetters[index].invalid?.Contains(letter) ?? false)
             return new InvalidLetter() { AlreadyWellPlacedLetter = true };
         else if (PlacedLetters[index].wellPlaced is char)
             if (ValidLetters.Contains(letter))
                 return new WronglyPlacedLetter() { AlreadyWellPlacedLetter = true };
-            else if (InvalidLetters.Contains(letter))
-                return new InvalidLetter();
             else
                 return new UnknownLetter() { AlreadyWellPlacedLetter = true };
         else
         {
             if (ValidLetters.Contains(letter))
                 return new WronglyPlacedLetter();
-            else if (InvalidLetters.Contains(letter))
-                return new InvalidLetter();
             else
                 return new UnknownLetter();
         }
