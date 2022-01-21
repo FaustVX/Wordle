@@ -32,7 +32,7 @@ for (var game = Start(); true; game = game.Recreate())
                     Write(letter.Char, WellPlacedColor);
                     break;
                 case { IsValid: true }:
-                    Write(letter.Char, ValidColor);
+                    Write(letter.Char, WronglyPlacedColor);
                     break;
                 default:
                     Write(letter.Char, InvalidColor);
@@ -99,7 +99,7 @@ static void WriteHeader(Game game)
         Console.Write("Random Word, ");
     for (var letter = 'a'; letter <= 'z'; letter++)
         Write(letter, game.PlacedLetters.Any(c => (c.wellPlaced ?? '\0') == letter) ? WellPlacedColor
-                    : game.ValidLetters.Contains(letter) ? ValidColor
+                    : game.ValidLetters.Contains(letter) ? WronglyPlacedColor
                     : game.InvalidLetters.Contains(letter) ? InvalidColor
                     : Console.ForegroundColor);
 }
@@ -225,8 +225,8 @@ static string? Input(Game game)
                 case WellPlacedLetter { AlreadyWellPlacedLetter: true }:
                     Write(letter, WellPlacedColor, AlreadyWellPlacedColor);
                     break;
-                case ValidLetter { AlreadyWellPlacedLetter: true }:
-                    Write(letter, ValidColor, AlreadyWellPlacedColor);
+                case WronglyPlacedLetter { AlreadyWellPlacedLetter: true }:
+                    Write(letter, WronglyPlacedColor, AlreadyWellPlacedColor);
                     break;
                 case InvalidLetter { AlreadyWellPlacedLetter: true }:
                     Write(letter, InvalidColor, AlreadyWellPlacedColor);
@@ -237,8 +237,8 @@ static string? Input(Game game)
                 case WellPlacedLetter:
                     Write(letter, WellPlacedColor);
                     break;
-                case ValidLetter:
-                    Write(letter, ValidColor);
+                case WronglyPlacedLetter:
+                    Write(letter, WronglyPlacedColor);
                     break;
                 case InvalidLetter:
                     Write(letter, InvalidColor);

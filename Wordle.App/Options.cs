@@ -3,7 +3,7 @@ namespace Wordle.App;
 public static class Options
 {
     public static ConsoleColor WellPlacedColor => ConsoleColor.Green;
-    public static ConsoleColor ValidColor => ConsoleColor.Yellow;
+    public static ConsoleColor WronglyPlacedColor => ConsoleColor.Yellow;
     public static ConsoleColor InvalidColor => ConsoleColor.Red;
     public static ConsoleColor AlreadyWellPlacedColor => ConsoleColor.DarkGray;
 

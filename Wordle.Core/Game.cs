@@ -117,11 +117,13 @@ public class Game
             else
                 return new UnknownLetter() { AlreadyWellPlacedLetter = true };
         else
+        {
             if (ValidLetters.Contains(letter))
-            return new WronglyPlacedLetter();
-        else if (InvalidLetters.Contains(letter))
-            return new InvalidLetter();
-        else
-            return new UnknownLetter();
+                return new WronglyPlacedLetter();
+            else if (InvalidLetters.Contains(letter))
+                return new InvalidLetter();
+            else
+                return new UnknownLetter();
+        }
     }
 }
