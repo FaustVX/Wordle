@@ -2,6 +2,7 @@
 using static ConsoleMenu.Helpers;
 using System.Diagnostics;
 using static Wordle.App.Options;
+using System.IO.Compression;
 
 for (var game = Start(); true; game = game.Recreate())
 {
@@ -46,10 +47,36 @@ for (var game = Start(); true; game = game.Recreate())
         }
     } while (game.RemainingTries > 0);
 
-    Console.WriteLine($"The word was {game.SelectedWord}");
+    Console.Write($"The word was ");
+    (var foreground, Console.ForegroundColor) = (Console.ForegroundColor, ConsoleColor.Blue);
+    Console.WriteLine(game.SelectedWord);
+    Console.ForegroundColor = ConsoleColor.Yellow;
+    Console.Write("Searching definition on '1mot.net'");
+    (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
+    Console.ForegroundColor = ConsoleColor.DarkBlue;
+    Console.WriteLine(await GetDefinition(game.SelectedWord, minLength));
+    Console.ForegroundColor = foreground;
     Console.WriteLine("Press any key to restart a game, or Esc to customize");
     if (Console.ReadKey().Key is ConsoleKey.Escape)
         game = Start();
+}
+
+static async Task<string> GetDefinition(string word, int minLength)
+{
+    var http = new HttpClient();
+    var response = await http.GetAsync($"https://1mot.net/{word}");
+
+    using var stream = await response.Content.ReadAsStreamAsync();
+    using var decompressed = new GZipStream(stream, CompressionMode.Decompress);
+    using var reader = new StreamReader(decompressed);
+
+    var content = reader.ReadToEnd();
+    var wikwikPos = content.IndexOf("WikWik.org");
+    var defStartPos = content.IndexOf("<ul><li>", wikwikPos);
+    var startPos = content.IndexOf("&nbsp;", defStartPos);
+    var endPos = content.IndexOf("</li>", startPos);
+
+    return content[content.IndexOf(' ', startPos)..endPos].Trim().PadRight(minLength, ' ');
 }
 
 static void WriteHeader(Game game)
