@@ -48,14 +48,14 @@ for (var game = Start(); true; game = game.Recreate())
     } while (game.RemainingTries > 0);
 
     Console.Write($"The word was ");
-    (var foreground, Console.ForegroundColor) = (Console.ForegroundColor, ConsoleColor.Blue);
+    (var foreground, Console.ForegroundColor) = (Console.ForegroundColor, SelectedWordColor);
     Console.WriteLine(game.SelectedWord);
     if (!game.IsRandomWord)
     {
-        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.ForegroundColor = SearchingColor;
         Console.Write("Searching definition on '1mot.net'");
         (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
-        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.ForegroundColor = DefinitionColor;
         foreach (var definition in await GetDefinition(game.SelectedWord))
             Console.WriteLine("- " + definition.PadRight(minLength, ' '));
     }

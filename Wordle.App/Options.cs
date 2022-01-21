@@ -6,6 +6,9 @@ public static class Options
     public static ConsoleColor WronglyPlacedColor => ConsoleColor.Yellow;
     public static ConsoleColor InvalidColor => ConsoleColor.Red;
     public static ConsoleColor AlreadyWellPlacedColor => ConsoleColor.DarkGray;
+    public static ConsoleColor DefinitionColor => ConsoleColor.Blue;
+    public static ConsoleColor SearchingColor => ConsoleColor.Yellow;
+    public static ConsoleColor SelectedWordColor => ConsoleColor.Blue;
 
     public static void Write(char c, ConsoleColor foreground)
     {
