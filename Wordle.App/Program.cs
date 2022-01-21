@@ -55,8 +55,9 @@ for (var game = Start(); true; game = game.Recreate())
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.Write("Searching definition on '1mot.net'");
         (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
-        Console.ForegroundColor = ConsoleColor.DarkBlue;
-        Console.WriteLine(await GetDefinition(game.SelectedWord, minLength));
+        Console.ForegroundColor = ConsoleColor.Blue;
+        foreach (var definition in await GetDefinition(game.SelectedWord))
+            Console.WriteLine("- " + definition.PadRight(minLength, ' '));
     }
     Console.ForegroundColor = foreground;
     Console.WriteLine("Press any key to restart a game, or Esc to customize");
@@ -64,7 +65,7 @@ for (var game = Start(); true; game = game.Recreate())
         game = Start();
 }
 
-static async Task<string> GetDefinition(string word, int minLength)
+static async Task<IEnumerable<string>> GetDefinition(string word)
 {
     var http = new HttpClient();
     var response = await http.GetAsync($"https://1mot.net/{word}");
@@ -74,12 +75,21 @@ static async Task<string> GetDefinition(string word, int minLength)
     using var reader = new StreamReader(decompressed);
 
     var content = reader.ReadToEnd();
-    var wikwikPos = content.IndexOf("WikWik.org");
-    var defStartPos = content.IndexOf("<ul><li>", wikwikPos);
-    var startPos = content.IndexOf("&nbsp;", defStartPos);
-    var endPos = content.IndexOf("</li>", startPos);
+    return GetDefinition(content);
 
-    return content[content.IndexOf(' ', startPos)..endPos].Trim().PadRight(minLength, ' ');
+    static IEnumerable<string> GetDefinition(string htmlContent)
+    {
+        var wikwikPos = htmlContent.IndexOf("WikWik.org");
+        var defStartPos = htmlContent.IndexOf("<ul>", wikwikPos);
+        var defEndPos = htmlContent.IndexOf("</ul>", defStartPos);
+        for (var startPos = htmlContent.IndexOf("<li>", defStartPos); startPos < defEndPos && startPos != -1; startPos = htmlContent.IndexOf("<li>", startPos + 1))
+        {
+            var startDefPos = htmlContent.IndexOf("&nbsp;", startPos);
+            var endPos = htmlContent.IndexOf("</li>", startPos);
+
+            yield return htmlContent[htmlContent.IndexOf(' ', startDefPos)..endPos].Trim();
+        }
+    }
 }
 
 static void WriteHeader(Game game)
