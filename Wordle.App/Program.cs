@@ -10,7 +10,7 @@ for (var game = Start(); true; game = game.Recreate())
     WriteHeader(game);
     Console.WriteLine();
 
-    var triedAll = true;
+    var found = false;
     do
     {
         var input = Input(game);
@@ -43,7 +43,7 @@ for (var game = Start(); true; game = game.Recreate())
         Console.WriteLine();
         if (word.All([DebuggerStepThrough] static (letter) => letter.IsWellPlaced))
         {
-            triedAll = false;
+            found = true;
             Console.WriteLine("Well played");
             break;
         }
@@ -63,14 +63,14 @@ for (var game = Start(); true; game = game.Recreate())
     }
     Console.ForegroundColor = foreground;
 
-    PrintScores(game, triedAll);
+    PrintScores(game, found);
 
     Console.WriteLine("Press any key to restart a game, or Esc to customize");
     if (Console.ReadKey().Key is ConsoleKey.Escape)
         game = Start();
 }
 
-static void PrintScores(Game game, bool triedAll)
+static void PrintScores(Game game, bool found)
 {
     Console.WriteLine("High Scores:");
     var (totalGames, scores) = game.Scores;
@@ -79,16 +79,19 @@ static void PrintScores(Game game, bool triedAll)
         var score = scores[i];
         totalGames -= score;
         if (score is not 0)
-            Write($"{i} : {score}\n", game.RemainingTries == i ? CurrentHighScore : AllHighScore);
+            Write($"{i} : {score}\n", found && game.RemainingTries == i ? CurrentHighScore : AllHighScore);
     }
     if (totalGames is not 0)
-        Write($"X : {totalGames}\n", triedAll || game.RemainingTries < 0 ? CurrentHighScore : AllHighScore);
+        Write($"X : {totalGames}\n", !found ? CurrentHighScore : AllHighScore);
 }
 
 static async Task<IEnumerable<string>> GetDefinition(string word)
 {
     var http = new HttpClient();
     var response = await http.GetAsync($"https://1mot.net/{word}");
+
+    if (!response.IsSuccessStatusCode)
+        return Enumerable.Empty<string>();
 
     using var stream = await response.Content.ReadAsStreamAsync();
     using var decompressed = new GZipStream(stream, CompressionMode.Decompress);
@@ -100,8 +103,14 @@ static async Task<IEnumerable<string>> GetDefinition(string word)
     static IEnumerable<string> GetDefinition(string htmlContent)
     {
         var wikwikPos = htmlContent.IndexOf("WikWik.org");
+        if (wikwikPos < 0)
+            yield break;
         var defStartPos = htmlContent.IndexOf("<ul>", wikwikPos);
+        if (defStartPos < 0)
+            yield break;
         var defEndPos = htmlContent.IndexOf("</ul>", defStartPos);
+        if (defEndPos < 0)
+            yield break;
         for (var startPos = htmlContent.IndexOf("<li>", defStartPos); startPos < defEndPos && startPos != -1; startPos = htmlContent.IndexOf("<li>", startPos + 1))
         {
             var startDefPos = htmlContent.IndexOf("&nbsp;", startPos);
