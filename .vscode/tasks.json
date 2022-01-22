@@ -21,7 +21,9 @@
                 "publish",
                 "${workspaceFolder}/Wordle.App/Wordle.App.csproj",
                 "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary"
+                "/consoleloggerparameters:NoSummary",
+                "--configuration",
+                "${input:Configuration}"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -37,6 +39,27 @@
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "7Zip",
+            "type": "shell",
+            "command": "\"C:\\Program Files\\7-Zip\\7z.exe\" a -t7z -mx9 Wordle.7z *.exe *.dll *.json *.pdb",
+            "dependsOn": "publish",
+            "options": {
+                "cwd": "${workspaceFolder}/Wordle.App/bin/${input:Configuration}/net6.0/publish"
+            },
+            "problemMatcher": []
         }
-    ]
+    ],
+    "inputs": [
+        {
+            "id": "Configuration",
+            "type": "pickString",
+            "description": "Build Configuration",
+            "options": [
+                "Release",
+                "Debug",
+            ],
+        },
+    ],
 }
