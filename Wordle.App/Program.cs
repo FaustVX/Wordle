@@ -10,6 +10,7 @@ for (var game = Start(); true; game = game.Recreate())
     WriteHeader(game);
     Console.WriteLine();
 
+    var triedAll = true;
     do
     {
         var input = Input(game);
@@ -42,6 +43,7 @@ for (var game = Start(); true; game = game.Recreate())
         Console.WriteLine();
         if (word.All([DebuggerStepThrough] static (letter) => letter.IsWellPlaced))
         {
+            triedAll = false;
             Console.WriteLine("Well played");
             break;
         }
@@ -60,9 +62,26 @@ for (var game = Start(); true; game = game.Recreate())
             Console.WriteLine("- " + definition.PadRight(minLength, ' '));
     }
     Console.ForegroundColor = foreground;
+
+    PrintScores(game, triedAll);
+
     Console.WriteLine("Press any key to restart a game, or Esc to customize");
     if (Console.ReadKey().Key is ConsoleKey.Escape)
         game = Start();
+}
+
+static void PrintScores(Game game, bool triedAll)
+{
+    var scores = game.Scores;
+    for (int i = scores.scores.Length - 1; i >= 0; i--)
+    {
+        var score = scores.scores[i];
+        scores.totalGames -= score;
+        if (score is not 0)
+            Write($"{i} : {score}\n", game.RemainingTries == i ? CurrentHighScore : AllHighScore);
+    }
+    if (scores.totalGames is not 0)
+        Write($"X : {scores.totalGames}\n", triedAll || game.RemainingTries < 0 ? CurrentHighScore : AllHighScore);
 }
 
 static async Task<IEnumerable<string>> GetDefinition(string word)

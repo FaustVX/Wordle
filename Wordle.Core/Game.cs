@@ -5,6 +5,8 @@ public class Game
 {
     private static readonly Dictionary<int, string[]> _wordLists;
     public static IEnumerable<int> ValideWordLength => _wordLists.Keys;
+    private static readonly Dictionary<(int wordLength, int maxTries), (int totalGames, int[] scores)> _allScores = new();
+    public static IReadOnlyDictionary<(int wordLength, int maxTries), (int totalGames, int[] scores)> AllScores => _allScores;
 
     static Game()
     {
@@ -36,6 +38,15 @@ public class Game
     private readonly HashSet<char> invalidLetters = new();
     public IReadOnlyCollection<char> InvalidLetters => invalidLetters;
 
+    public (int totalGames, int[] scores) Scores
+    {
+        get => _allScores.TryGetValue((WordLength, PossibleTries), out var value)
+                ? value
+                : (_allScores[(WordLength, PossibleTries)] = (0, new int[PossibleTries]));
+
+        set => _allScores[(WordLength, PossibleTries)] = value;
+    }
+
     public Game(int wordLength, int possibleTries, bool randomWord)
     {
         IsRandomWord = randomWord;
@@ -47,6 +58,7 @@ public class Game
         SelectedWord = IsRandomWord
             ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(rng => (char)rng.Next('a', 'z' + 1)))
             : WordList[new Random().Next(WordList.Count)];
+        Scores = (Scores.totalGames + 1, Scores.scores);
     }
 
     public Game Recreate()
@@ -89,6 +101,8 @@ public class Game
                     invalidLetters.Add(c);
                     break;
             }
+        if (result.All(static l => l.IsWellPlaced))
+            Scores.scores[RemainingTries]++;
 
         return result;
 

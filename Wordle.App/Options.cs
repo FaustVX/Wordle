@@ -9,6 +9,8 @@ public static class Options
     public static ConsoleColor DefinitionColor => ConsoleColor.Blue;
     public static ConsoleColor SearchingColor => ConsoleColor.Yellow;
     public static ConsoleColor SelectedWordColor => ConsoleColor.Blue;
+    public static ConsoleColor CurrentHighScore => ConsoleColor.Green;
+    public static ConsoleColor AllHighScore => ConsoleColor.Yellow;
 
     public static void Write(char c, ConsoleColor foreground)
     {
