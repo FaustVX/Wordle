@@ -1,8 +1,8 @@
 ﻿using Wordle.Core;
-using static ConsoleMenu.Helpers;
 using System.Diagnostics;
-using static Wordle.App.Options;
 using System.IO.Compression;
+using static ConsoleMenu.Helpers;
+using static Wordle.App.Options;
 
 for (var game = Start(); true; game = game.Recreate())
 {
@@ -24,7 +24,7 @@ for (var game = Start(); true; game = game.Recreate())
         }
         Console.CursorTop--;
         Console.Write($"{game.RemainingTries}> ");
-        for (int i = 0; i < word.Length; i++)
+        for (var i = 0; i < word.Length; i++)
         {
             var letter = word[i];
             switch (letter)
@@ -72,16 +72,17 @@ for (var game = Start(); true; game = game.Recreate())
 
 static void PrintScores(Game game, bool triedAll)
 {
-    var scores = game.Scores;
-    for (int i = scores.scores.Length - 1; i >= 0; i--)
+    Console.WriteLine("High Scores:");
+    var (totalGames, scores) = game.Scores;
+    for (var i = scores.Length - 1; i >= 0; i--)
     {
-        var score = scores.scores[i];
-        scores.totalGames -= score;
+        var score = scores[i];
+        totalGames -= score;
         if (score is not 0)
             Write($"{i} : {score}\n", game.RemainingTries == i ? CurrentHighScore : AllHighScore);
     }
-    if (scores.totalGames is not 0)
-        Write($"X : {scores.totalGames}\n", triedAll || game.RemainingTries < 0 ? CurrentHighScore : AllHighScore);
+    if (totalGames is not 0)
+        Write($"X : {totalGames}\n", triedAll || game.RemainingTries < 0 ? CurrentHighScore : AllHighScore);
 }
 
 static async Task<IEnumerable<string>> GetDefinition(string word)
@@ -127,7 +128,7 @@ static Game Start()
 {
     Console.WriteLine("Welcome to Wordle");
 
-    var length = Menu("Select word length", Game.ValideWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    var length = Menu("Select word length", Game.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
     return new(length, tries, isRandom);
@@ -143,9 +144,11 @@ static string? Input(Game game)
 
     WriteHeader(game);
     Console.SetCursorPosition(0, top);
+    var hasChanged = true;
     do
     {
-        WriteWord(word, hasChar, game, currentPosition);
+        WriteWord(word, hasChar, game, currentPosition, hasChanged);
+        hasChanged = false;
         var letter = Console.ReadKey(intercept: true);
         switch (letter.Key)
         {
@@ -154,25 +157,43 @@ static string? Input(Game game)
                 {
                     currentPosition--;
                     hasChar[currentPosition] = false;
+                    hasChanged = true;
                 }
                 continue;
             case ConsoleKey.Delete:
-                if (currentPosition < length)
+                if (currentPosition < length && hasChar[currentPosition])
+                {
                     hasChar[currentPosition] = false;
+                    hasChanged = true;
+                }
                 continue;
             case ConsoleKey.LeftArrow:
                 if (currentPosition > 0)
-                    currentPosition--;
+                {
+                    if (letter.Modifiers.HasFlag(ConsoleModifiers.Control))
+                        currentPosition = 0;
+                    else
+                        currentPosition--;
+                    hasChanged = true;
+                }
                 continue;
             case ConsoleKey.RightArrow:
                 if (currentPosition < length)
-                    currentPosition++;
+                {
+                    if (letter.Modifiers.HasFlag(ConsoleModifiers.Control))
+                        currentPosition = length;
+                    else
+                        currentPosition++;
+                    hasChanged = true;
+                }
                 continue;
             case ConsoleKey.UpArrow:
                 CycleLetter(word, hasChar, currentPosition, game, +1);
+                hasChanged = true;
                 continue;
             case ConsoleKey.DownArrow:
                 CycleLetter(word, hasChar, currentPosition, game, -1);
+                hasChanged = true;
                 continue;
             case ConsoleKey.Enter:
                 if (game.IsPossibleWord(new(word)))
@@ -201,6 +222,7 @@ static string? Input(Game game)
         word[currentPosition] = letter.KeyChar;
         hasChar[currentPosition] = true;
         currentPosition++;
+        hasChanged = true;
 
         static void CycleLetter(char[] word, bool[] hasChar, int currentPosition, Game game, int offset)
         {
@@ -215,13 +237,15 @@ static string? Input(Game game)
                 hasChar[currentPosition] = true;
         }
 
-        static void WriteWord(char[] word, bool[] hasChar, Game game, int currentPosition)
+        static void WriteWord(char[] word, bool[] hasChar, Game game, int currentPosition, bool hasChanged)
         {
+            if (!hasChanged)
+                return;
             Console.CursorVisible = false;
             Console.CursorLeft = 0;
             Console.Write($"{game.RemainingTries - 1}: ");
             var lineSpacing = Console.CursorLeft;
-            for (int i = 0; i < word.Length; i++)
+            for (var i = 0; i < word.Length; i++)
             {
                 if (!hasChar[i] && game.PlacedLetters[i].wellPlaced is char c)
                 {

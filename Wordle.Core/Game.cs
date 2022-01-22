@@ -4,7 +4,7 @@ namespace Wordle.Core;
 public class Game
 {
     private static readonly Dictionary<int, string[]> _wordLists;
-    public static IEnumerable<int> ValideWordLength => _wordLists.Keys;
+    public static IEnumerable<int> ValidWordLength => _wordLists.Keys;
     private static readonly Dictionary<(int wordLength, int maxTries), (int totalGames, int[] scores)> _allScores = new();
     public static IReadOnlyDictionary<(int wordLength, int maxTries), (int totalGames, int[] scores)> AllScores => _allScores;
 
@@ -56,7 +56,7 @@ public class Game
         PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
         WordList = _wordLists[WordLength];
         SelectedWord = IsRandomWord
-            ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(rng => (char)rng.Next('a', 'z' + 1)))
+            ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(static rng => (char)rng.Next('a', 'z' + 1)))
             : WordList[new Random().Next(WordList.Count)];
         Scores = (Scores.totalGames + 1, Scores.scores);
     }
@@ -65,7 +65,14 @@ public class Game
         => new(WordLength, PossibleTries, IsRandomWord);
 
     public bool IsPossibleWord(string word)
-        => RemainingTries > 0 && word.Length == SelectedWord.Length && (IsRandomWord || WordList.Contains(word)) && (!IsRandomWord || word.Skip(1).Any(l => l != word[0]));
+        => HasRemainingTries && IsValidWordLength(word) && IsWordInDictionary(word) && IsNotAllSameLetters(word);
+    public bool HasRemainingTries => RemainingTries > 0;
+    public bool IsValidWordLength(string word)
+        => word.Length == WordLength;
+    public bool IsWordInDictionary(string word)
+        => IsRandomWord || WordList.Contains(word);
+    public bool IsNotAllSameLetters(string word)
+        => !IsRandomWord || word.Skip(1).Any([DebuggerStepThrough] (l) => l != word[0]);
 
     public Letter[]? Try(string word)
     {
@@ -73,20 +80,20 @@ public class Game
             return null;
 
         RemainingTries--;
-        var remainingLetters = SelectedWord.GroupBy(static l => l).ToDictionary(g => g.Key, g => g.Count());
+        var remainingLetters = SelectedWord.GroupBy(static l => l).ToDictionary(static g => g.Key, static g => g.Count());
         var result = new Letter[SelectedWord.Length];
-        for (int i = 0; i < result.Length; i++)
+        for (var i = 0; i < result.Length; i++)
             if (word[i] == SelectedWord[i])
             {
                 result[i] = new(word[i], true, true);
                 remainingLetters[word[i]]--;
             }
 
-        for (int i = 0; i < result.Length; i++)
+        for (var i = 0; i < result.Length; i++)
             if (word[i] != SelectedWord[i])
-                result[i] = new(word[i], CheckRemainingLetter(word[i], remainingLetters), false);
+                result[i] = new(word[i], CheckRemainingLetters(word[i], remainingLetters), false);
 
-        for (int i = 0; i < result.Length; i++)
+        for (var i = 0; i < result.Length; i++)
             switch (result[i])
             {
                 case { IsWellPlaced: true, Char: var c }:
@@ -106,7 +113,7 @@ public class Game
 
         return result;
 
-        static bool CheckRemainingLetter(char l, Dictionary<char, int> remainingLetters)
+        static bool CheckRemainingLetters(char l, Dictionary<char, int> remainingLetters)
         {
             if (remainingLetters.TryGetValue(l, out var remaining) && remaining > 0)
             {
