@@ -4,7 +4,7 @@ using System.IO.Compression;
 using static ConsoleMenu.Helpers;
 using static Wordle.App.Options;
 
-for (var game = Start(); true; game = game.Recreate())
+for (var (game, customize) = (Start(), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
 {
     Console.Clear();
     WriteHeader(game);
@@ -67,7 +67,7 @@ for (var game = Start(); true; game = game.Recreate())
 
     Console.WriteLine("Press any key to restart a game, or Esc to customize");
     if (Console.ReadKey().Key is ConsoleKey.Escape)
-        game = Start();
+        customize = true;
 }
 
 static void PrintScores(Game game, bool found)
