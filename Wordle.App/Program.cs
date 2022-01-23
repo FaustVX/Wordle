@@ -197,12 +197,18 @@ static string? Input(Game game)
                 }
                 continue;
             case ConsoleKey.UpArrow:
-                CycleLetter(word, hasChar, currentPosition, game, +1);
-                hasChanged = true;
+                if (currentPosition >= 0 && currentPosition < game.WordLength)
+                {
+                    CycleLetter(word, hasChar, currentPosition, game, +1);
+                    hasChanged = true;
+                }
                 continue;
             case ConsoleKey.DownArrow:
-                CycleLetter(word, hasChar, currentPosition, game, -1);
-                hasChanged = true;
+                if (currentPosition >= 0 && currentPosition < game.WordLength)
+                {
+                    CycleLetter(word, hasChar, currentPosition, game, -1);
+                    hasChanged = true;
+                }
                 continue;
             case ConsoleKey.Enter:
                 if (game.IsPossibleWord(new(word)))
@@ -235,15 +241,15 @@ static string? Input(Game game)
 
         static void CycleLetter(char[] word, bool[] hasChar, int currentPosition, Game game, int offset)
         {
-                var startLetter = hasChar[currentPosition] ? word[currentPosition]
-                    : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
-                    : offset > 0 ? 'z' : 'a';
-                do
-                {
-                    startLetter = (char)((startLetter + 26 + offset - 'a') % 26 + 'a');
-                } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
-                word[currentPosition] = startLetter;
-                hasChar[currentPosition] = true;
+            var startLetter = hasChar[currentPosition] ? word[currentPosition]
+                : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
+                : offset > 0 ? 'z' : 'a';
+            do
+            {
+                startLetter = (char)((startLetter + 26 + offset - 'a') % 26 + 'a');
+            } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
+            word[currentPosition] = startLetter;
+            hasChar[currentPosition] = true;
         }
 
         static void WriteWord(char[] word, bool[] hasChar, Game game, int currentPosition, bool hasChanged)
