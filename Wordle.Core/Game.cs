@@ -104,8 +104,10 @@ public class Game
                     validLetters.Add(c);
                     (PlacedLetters[i].invalid ??= new()).Add(c);
                     break;
-                case { Char: var c } when !remainingLetters.ContainsKey(c):
-                    invalidLetters.Add(c);
+                case { Char: var c }:
+                    if (!remainingLetters.ContainsKey(c))
+                        invalidLetters.Add(c);
+                    (PlacedLetters[i].invalid ??= new()).Add(c);
                     break;
             }
         if (result.All(static l => l.IsWellPlaced))
