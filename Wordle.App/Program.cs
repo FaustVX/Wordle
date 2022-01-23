@@ -238,73 +238,73 @@ static string? Input(Game game)
         hasChar[currentPosition] = true;
         currentPosition++;
         hasChanged = true;
-
-        static void CycleLetter(char[] word, bool[] hasChar, int currentPosition, Game game, int offset)
-        {
-            var startLetter = hasChar[currentPosition] ? word[currentPosition]
-                : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
-                : offset > 0 ? 'z' : 'a';
-            do
-            {
-                startLetter = (char)((startLetter + 26 + offset - 'a') % 26 + 'a');
-            } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
-            word[currentPosition] = startLetter;
-            hasChar[currentPosition] = true;
-        }
-
-        static void WriteWord(char[] word, bool[] hasChar, Game game, int currentPosition, bool hasChanged)
-        {
-            if (!hasChanged)
-                return;
-            Console.CursorVisible = false;
-            Console.CursorLeft = 0;
-            Console.Write($"{game.RemainingTries - 1}: ");
-            var lineSpacing = Console.CursorLeft;
-            for (var i = 0; i < word.Length; i++)
-            {
-                if (!hasChar[i] && game.PlacedLetters[i].wellPlaced is char c)
-                {
-                    word[i] = c;
-                    hasChar[i] = true;
-                }
-                if (hasChar[i])
-                    WriteChar(word[i], i, game);
-                else
-                    Console.Write(' ');
-            }
-            Console.CursorLeft = lineSpacing + currentPosition;
-            Console.CursorVisible = true;
-        }
-
-        static void WriteChar(char letter, int currentPosition, Game game)
-        {
-            switch (game.IsValidAtPos(letter, currentPosition))
-            {
-                case WellPlacedLetter { AlreadyWellPlacedLetter: true }:
-                    Write(letter, WellPlacedColor, AlreadyWellPlacedColor);
-                    break;
-                case WronglyPlacedLetter { AlreadyWellPlacedLetter: true }:
-                    Write(letter, WronglyPlacedColor, AlreadyWellPlacedColor);
-                    break;
-                case InvalidLetter { AlreadyWellPlacedLetter: true }:
-                    Write(letter, InvalidColor, AlreadyWellPlacedColor);
-                    break;
-                case UnknownLetter { AlreadyWellPlacedLetter: true }:
-                    Write(letter, Console.ForegroundColor, AlreadyWellPlacedColor);
-                    break;
-                case WellPlacedLetter:
-                    Write(letter, WellPlacedColor);
-                    break;
-                case WronglyPlacedLetter:
-                    Write(letter, WronglyPlacedColor);
-                    break;
-                case InvalidLetter:
-                    Write(letter, InvalidColor);
-                    break;
-                case UnknownLetter:
-                    Write(letter, Console.ForegroundColor);
-                    break;
-            }
-        }
     } while (true);
+
+    static void CycleLetter(char[] word, bool[] hasChar, int currentPosition, Game game, int offset)
+    {
+        var startLetter = hasChar[currentPosition] ? word[currentPosition]
+            : game.PlacedLetters[currentPosition].wellPlaced is char c ? c
+            : offset > 0 ? 'z' : 'a';
+        do
+        {
+            startLetter = (char)((startLetter + 26 + offset - 'a') % 26 + 'a');
+        } while (game.IsValidAtPos(startLetter, currentPosition) is InvalidLetter);
+        word[currentPosition] = startLetter;
+        hasChar[currentPosition] = true;
+    }
+
+    static void WriteWord(char[] word, bool[] hasChar, Game game, int currentPosition, bool hasChanged)
+    {
+        if (!hasChanged)
+            return;
+        Console.CursorVisible = false;
+        Console.CursorLeft = 0;
+        Console.Write($"{game.RemainingTries - 1}: ");
+        var lineSpacing = Console.CursorLeft;
+        for (var i = 0; i < word.Length; i++)
+        {
+            if (!hasChar[i] && game.PlacedLetters[i].wellPlaced is char c)
+            {
+                word[i] = c;
+                hasChar[i] = true;
+            }
+            if (hasChar[i])
+                WriteChar(word[i], i, game);
+            else
+                Console.Write(' ');
+        }
+        Console.CursorLeft = lineSpacing + currentPosition;
+        Console.CursorVisible = true;
+    }
+
+    static void WriteChar(char letter, int currentPosition, Game game)
+    {
+        switch (game.IsValidAtPos(letter, currentPosition))
+        {
+            case WellPlacedLetter { AlreadyWellPlacedLetter: true }:
+                Write(letter, WellPlacedColor, AlreadyWellPlacedColor);
+                break;
+            case WronglyPlacedLetter { AlreadyWellPlacedLetter: true }:
+                Write(letter, WronglyPlacedColor, AlreadyWellPlacedColor);
+                break;
+            case InvalidLetter { AlreadyWellPlacedLetter: true }:
+                Write(letter, InvalidColor, AlreadyWellPlacedColor);
+                break;
+            case UnknownLetter { AlreadyWellPlacedLetter: true }:
+                Write(letter, Console.ForegroundColor, AlreadyWellPlacedColor);
+                break;
+            case WellPlacedLetter:
+                Write(letter, WellPlacedColor);
+                break;
+            case WronglyPlacedLetter:
+                Write(letter, WronglyPlacedColor);
+                break;
+            case InvalidLetter:
+                Write(letter, InvalidColor);
+                break;
+            case UnknownLetter:
+                Write(letter, Console.ForegroundColor);
+                break;
+        }
+    }
 }
