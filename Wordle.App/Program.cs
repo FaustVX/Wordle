@@ -3,72 +3,76 @@ using System.Diagnostics;
 using System.IO.Compression;
 using static ConsoleMenu.Helpers;
 using static Wordle.App.Options;
+using Cocona;
 
-for (var (game, customize) = (Start(), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
+CoconaLiteApp.Run(async ([Option('l')]int? wordLength, [Option('t')]int? tries, [Option('r')]bool? isRandom) =>
 {
-    Console.Clear();
-    WriteHeader(game);
-    Console.WriteLine();
-
-    var found = false;
-    do
+    for (var (game, customize) = (Start(wordLength, tries, isRandom), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
     {
-        var input = Input(game);
-        if (input is null)
-            break;
-        var word = game.Try(input);
-        if (word is null)
-        {
-            Console.WriteLine("Invalid word!");
-            continue;
-        }
-        Console.CursorTop--;
-        Console.Write($"{game.RemainingTries}> ");
-        for (var i = 0; i < word.Length; i++)
-        {
-            var letter = word[i];
-            switch (letter)
-            {
-                case { IsWellPlaced: true }:
-                    Write(letter.Char, WellPlacedColor);
-                    break;
-                case { IsValid: true }:
-                    Write(letter.Char, WronglyPlacedColor);
-                    break;
-                default:
-                    Write(letter.Char, InvalidColor);
-                    break;
-            }
-        }
+        Console.Clear();
+        WriteHeader(game);
         Console.WriteLine();
-        if (word.All([DebuggerStepThrough] static (letter) => letter.IsWellPlaced))
+
+        var found = false;
+        do
         {
-            found = true;
-            Console.WriteLine("Well played");
-            break;
+            var input = Input(game);
+            if (input is null)
+                break;
+            var word = game.Try(input);
+            if (word is null)
+            {
+                Console.WriteLine("Invalid word!");
+                continue;
+            }
+            Console.CursorTop--;
+            Console.Write($"{game.RemainingTries}> ");
+            for (var i = 0; i < word.Length; i++)
+            {
+                var letter = word[i];
+                switch (letter)
+                {
+                    case { IsWellPlaced: true }:
+                        Write(letter.Char, WellPlacedColor);
+                        break;
+                    case { IsValid: true }:
+                        Write(letter.Char, WronglyPlacedColor);
+                        break;
+                    default:
+                        Write(letter.Char, InvalidColor);
+                        break;
+                }
+            }
+            Console.WriteLine();
+            if (word.All([DebuggerStepThrough] static (letter) => letter.IsWellPlaced))
+            {
+                found = true;
+                Console.WriteLine("Well played");
+                break;
+            }
+        } while (game.RemainingTries > 0);
+
+        Console.Write($"The word was ");
+        (var foreground, Console.ForegroundColor) = (Console.ForegroundColor, SelectedWordColor);
+        Console.WriteLine(game.SelectedWord);
+        if (!game.IsRandomWord)
+        {
+            Console.ForegroundColor = SearchingColor;
+            Console.Write("Searching definition on '1mot.net'");
+            (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
+            Console.ForegroundColor = DefinitionColor;
+            foreach (var definition in await GetDefinition(game.SelectedWord))
+                Console.WriteLine("- " + definition.PadRight(minLength, ' '));
         }
-    } while (game.RemainingTries > 0);
+        Console.ForegroundColor = foreground;
 
-    Console.Write($"The word was ");
-    (var foreground, Console.ForegroundColor) = (Console.ForegroundColor, SelectedWordColor);
-    Console.WriteLine(game.SelectedWord);
-    if (!game.IsRandomWord)
-    {
-        Console.ForegroundColor = SearchingColor;
-        Console.Write("Searching definition on '1mot.net'");
-        (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
-        Console.ForegroundColor = DefinitionColor;
-        foreach (var definition in await GetDefinition(game.SelectedWord))
-            Console.WriteLine("- " + definition.PadRight(minLength, ' '));
+        PrintScores(game, found);
+
+        Console.WriteLine("Press any key to restart a game, or Esc to customize");
+        if (Console.ReadKey().Key is ConsoleKey.Escape)
+            customize = true;
     }
-    Console.ForegroundColor = foreground;
-
-    PrintScores(game, found);
-
-    Console.WriteLine("Press any key to restart a game, or Esc to customize");
-    if (Console.ReadKey().Key is ConsoleKey.Escape)
-        customize = true;
-}
+});
 
 static void PrintScores(Game game, bool found)
 {
@@ -133,14 +137,14 @@ static void WriteHeader(Game game)
                     : Console.ForegroundColor);
 }
 
-static Game Start()
+static Game Start(int? length = null, int? tries = null, bool? isRandom = null)
 {
     Console.WriteLine("Welcome to Wordle");
 
-    var length = Menu("Select word length", Game.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
-    var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
-    var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
-    return new(length, tries, isRandom);
+    length ??= Menu("Select word length", Game.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    tries ??= Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    isRandom ??= Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
+    return new(length.Value, tries.Value, isRandom.Value);
 }
 
 static string? Input(Game game)
