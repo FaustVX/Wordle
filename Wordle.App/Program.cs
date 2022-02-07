@@ -4,10 +4,13 @@ using System.IO.Compression;
 using static ConsoleMenu.Helpers;
 using static Wordle.App.Options;
 using Cocona;
+using System.ComponentModel.DataAnnotations;
 
-CoconaLiteApp.Run(async ([Option('l')]int? wordLength, [Option('t')]int? tries, [Option('r')]bool? isRandom) =>
+CoconaLiteApp.Run(Run);
+
+static async Task Run([Option(new[]{'w', 'l'}), Range(3, int.MaxValue)]int wordLength = 5, [Option('t'), Range(4, 10)]int tries = 6, [Option('r')]bool isRandom = false)
 {
-    for (var (game, customize) = (Start(wordLength, tries, isRandom), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
+    for (var (game, customize) = (new Game(wordLength, tries, isRandom), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
     {
         Console.Clear();
         WriteHeader(game);
@@ -72,7 +75,7 @@ CoconaLiteApp.Run(async ([Option('l')]int? wordLength, [Option('t')]int? tries, 
         if (Console.ReadKey().Key is ConsoleKey.Escape)
             customize = true;
     }
-});
+}
 
 static void PrintScores(Game game, bool found)
 {
@@ -137,14 +140,14 @@ static void WriteHeader(Game game)
                     : Console.ForegroundColor);
 }
 
-static Game Start(int? length = null, int? tries = null, bool? isRandom = null)
+static Game Start()
 {
     Console.WriteLine("Welcome to Wordle");
 
-    length ??= Menu("Select word length", Game.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
-    tries ??= Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
-    isRandom ??= Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
-    return new(length.Value, tries.Value, isRandom.Value);
+    var length = Menu("Select word length", Game.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
+    return new(length, tries, isRandom);
 }
 
 static string? Input(Game game)
