@@ -9,10 +9,10 @@ using System.ComponentModel.DataAnnotations;
 CoconaLiteApp.Run(Run);
 
 static async Task Run(
-    [Option('w'), Range(3, int.MaxValue)] int wordLength = 5,
-    [Option('t'), Range(4, 10)] int tries = 6,
+    [Argument, Range(3, int.MaxValue)] int wordLength = 5,
+    [Argument, Range(4, 10)] int tries = 6,
     [Option('r')] bool isRandom = false,
-    [Option('l'), IsValidLanguage] string language = "fr")
+    [Argument, IsValidLanguage] string language = "fr")
 {
     for (var (game, customize) = (new Game(wordLength, tries, isRandom, WordList.WordLists[language]), false); true; (game, customize) = (customize ? Start(game) : game.Recreate(), false))
     {
