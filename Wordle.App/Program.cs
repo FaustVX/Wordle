@@ -10,7 +10,7 @@ CoconaLiteApp.Run(Run);
 
 static async Task Run([Option(new[]{'w', 'l'}), Range(3, int.MaxValue)]int wordLength = 5, [Option('t'), Range(4, 10)]int tries = 6, [Option('r')]bool isRandom = false)
 {
-    for (var (game, customize) = (new Game(wordLength, tries, isRandom), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
+    for (var (game, customize) = (new Game(wordLength, tries, isRandom, WordList.French), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
     {
         Console.Clear();
         WriteHeader(game);
@@ -144,10 +144,10 @@ static Game Start()
 {
     Console.WriteLine("Welcome to Wordle");
 
-    var length = Menu("Select word length", Game.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    var length = Menu("Select word length", WordList.French.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
-    return new(length, tries, isRandom);
+    return new(length, tries, isRandom, WordList.French);
 }
 
 static string? Input(Game game)

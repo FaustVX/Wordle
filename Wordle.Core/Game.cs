@@ -1,28 +1,11 @@
 ﻿using System.Diagnostics;
 
 namespace Wordle.Core;
+
 public class Game
 {
-    private static readonly Dictionary<int, string[]> _wordLists;
-    public static IEnumerable<int> ValidWordLength => _wordLists.Keys;
     private static readonly Dictionary<(int wordLength, int maxTries), (int totalGames, int[] scores)> _allScores = new();
     public static IReadOnlyDictionary<(int wordLength, int maxTries), (int totalGames, int[] scores)> AllScores => _allScores;
-
-    static Game()
-    {
-        using var http = new HttpClient();
-        _wordLists = http.GetStringAsync(@"https://raw.githubusercontent.com/LouanBen/wordle-fr/main/mots.txt")
-            .GetAwaiter()
-            .GetResult()
-            .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
-            .Where([DebuggerStepThrough] static (word) => word.Length >= 3)
-            .Select([DebuggerStepThrough] static (word) => word.ToLower())
-            .GroupBy([DebuggerStepThrough] static (word) => word.Length)
-            .Select([DebuggerStepThrough] static (group) => (key: group.Key, words: group.ToArray()))
-            .Where([DebuggerStepThrough] static (group) => group.words.Length > 10)
-            .OrderBy([DebuggerStepThrough] static (group) => group.key)
-            .ToDictionary([DebuggerStepThrough] static (group) => group.key, [DebuggerStepThrough] static (group) => group.words);
-    }
 
     public int WordLength { get; }
     public int PossibleTries { get; }
@@ -47,14 +30,18 @@ public class Game
         set => _allScores[(WordLength, PossibleTries)] = value;
     }
 
-    public Game(int wordLength, int possibleTries, bool randomWord)
+    public Game(int wordLength, int possibleTries, bool randomWord, WordList list)
+        : this(wordLength, possibleTries, randomWord, list[wordLength])
+    { }
+
+    private Game(int wordLength, int possibleTries, bool randomWord, IReadOnlyList<string> list)
     {
         IsRandomWord = randomWord;
         WordLength = wordLength;
         PossibleTries = possibleTries;
         RemainingTries = PossibleTries;
         PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
-        WordList = _wordLists[WordLength];
+        WordList = list;
         SelectedWord = IsRandomWord
             ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(static rng => (char)rng.Next('a', 'z' + 1)))
             : WordList[new Random().Next(WordList.Count)];
@@ -62,7 +49,7 @@ public class Game
     }
 
     public Game Recreate()
-        => new(WordLength, PossibleTries, IsRandomWord);
+        => new(WordLength, PossibleTries, IsRandomWord, WordList);
 
     public bool IsPossibleWord(string word)
         => HasRemainingTries && IsValidWordLength(word) && IsWordInDictionary(word) && IsNotAllSameLetters(word);
