@@ -148,9 +148,16 @@ static Game Start(Game previous)
 {
     Console.WriteLine("Welcome to Wordle");
 
+    var lists = WordList.WordLists.Values switch
+    {
+        IList<WordList> list => list,
+        { } list => list.ToList(),
+    };
+
     var length = Menu("Select word length", previous.CompleteWordList.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
+    var language = Menu("Select language", lists, wl => wl.Name);
     return new(length, tries, isRandom, previous.CompleteWordList);
 }
 
