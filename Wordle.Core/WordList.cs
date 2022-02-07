@@ -4,19 +4,23 @@ namespace Wordle.Core;
 
 public class WordList
 {
-    public static WordList French { get; } = new(new(@"https://raw.githubusercontent.com/LouanBen/wordle-fr/main/mots.txt"));
+    public static WordList French { get; } = new(new(@"https://raw.githubusercontent.com/LouanBen/wordle-fr/main/mots.txt"), "French");
+    public static WordList English { get; } = new(new(@"https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt"), "English");
     public static IReadOnlyDictionary<string, WordList> WordLists { get; } = new Dictionary<string, WordList>()
     {
         ["fr"] = French,
+        ["en"] = English,
     };
 
     private readonly Dictionary<int, string[]> _wordLists;
     public IEnumerable<int> ValidWordLength => _wordLists.Keys;
     public IReadOnlyList<string> this[int length]
         => _wordLists[length];
+    public string Name { get; }
 
-    public WordList(Uri uri)
+    private WordList(Uri uri, string name)
     {
+        Name = name;
         using var http = new HttpClient();
         _wordLists = http.GetStringAsync(uri)
             .GetAwaiter()

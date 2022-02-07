@@ -10,6 +10,7 @@ public class Game
     public int WordLength { get; }
     public int PossibleTries { get; }
     public string SelectedWord { get; }
+    public WordList CompleteWordList { get; }
     public IReadOnlyList<string> WordList { get; }
     public int RemainingTries { get; private set; }
     public (char? wellPlaced, HashSet<char>? invalid)[] PlacedLetters { get; }
@@ -31,17 +32,14 @@ public class Game
     }
 
     public Game(int wordLength, int possibleTries, bool randomWord, WordList list)
-        : this(wordLength, possibleTries, randomWord, list[wordLength])
-    { }
-
-    private Game(int wordLength, int possibleTries, bool randomWord, IReadOnlyList<string> list)
     {
         IsRandomWord = randomWord;
         WordLength = wordLength;
         PossibleTries = possibleTries;
         RemainingTries = PossibleTries;
         PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
-        WordList = list;
+        CompleteWordList = list;
+        WordList = CompleteWordList[WordLength];
         SelectedWord = IsRandomWord
             ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(static rng => (char)rng.Next('a', 'z' + 1)))
             : WordList[new Random().Next(WordList.Count)];
@@ -49,7 +47,7 @@ public class Game
     }
 
     public Game Recreate()
-        => new(WordLength, PossibleTries, IsRandomWord, WordList);
+        => new(WordLength, PossibleTries, IsRandomWord, CompleteWordList);
 
     public bool IsPossibleWord(string word)
         => HasRemainingTries && IsValidWordLength(word) && IsWordInDictionary(word) && IsNotAllSameLetters(word);

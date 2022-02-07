@@ -8,9 +8,13 @@ using System.ComponentModel.DataAnnotations;
 
 CoconaLiteApp.Run(Run);
 
-static async Task Run([Option(new[]{'w', 'l'}), Range(3, int.MaxValue)]int wordLength = 5, [Option('t'), Range(4, 10)]int tries = 6, [Option('r')]bool isRandom = false)
+static async Task Run(
+    [Option('w'), Range(3, int.MaxValue)] int wordLength = 5,
+    [Option('t'), Range(4, 10)] int tries = 6,
+    [Option('r')] bool isRandom = false,
+    [Option('l'), IsValidLanguage] string language = "fr")
 {
-    for (var (game, customize) = (new Game(wordLength, tries, isRandom, WordList.French), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
+    for (var (game, customize) = (new Game(wordLength, tries, isRandom, WordList.WordLists[language]), false); true; (game, customize) = (customize ? Start(game) : game.Recreate(), false))
     {
         Console.Clear();
         WriteHeader(game);
@@ -130,7 +134,7 @@ static async Task<IEnumerable<string>> GetDefinition(string word)
 
 static void WriteHeader(Game game)
 {
-    Console.Write($"{game.WordLength} letters, {game.PossibleTries} tries, ");
+    Console.Write($"{game.WordLength} letters, {game.PossibleTries} tries, {game.CompleteWordList.Name}, ");
     if (game.IsRandomWord)
         Console.Write("Random Word, ");
     for (var letter = 'a'; letter <= 'z'; letter++)
@@ -140,14 +144,14 @@ static void WriteHeader(Game game)
                     : Console.ForegroundColor);
 }
 
-static Game Start()
+static Game Start(Game previous)
 {
     Console.WriteLine("Welcome to Wordle");
 
-    var length = Menu("Select word length", WordList.French.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    var length = Menu("Select word length", previous.CompleteWordList.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
-    return new(length, tries, isRandom, WordList.French);
+    return new(length, tries, isRandom, previous.CompleteWordList);
 }
 
 static string? Input(Game game)
