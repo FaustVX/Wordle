@@ -3,71 +3,82 @@ using System.Diagnostics;
 using System.IO.Compression;
 using static ConsoleMenu.Helpers;
 using static Wordle.App.Options;
+using Cocona;
+using System.ComponentModel.DataAnnotations;
 
-for (var (game, customize) = (Start(), false); true; (game, customize) = (customize ? Start() : game.Recreate(), false))
+CoconaLiteApp.Run(Run);
+
+static async Task Run(
+    [Argument, Range(3, int.MaxValue)] int wordLength = 5,
+    [Argument, Range(4, 10)] int tries = 6,
+    [Option('r')] bool isRandom = false,
+    [Argument, IsValidLanguage] string language = "fr")
 {
-    Console.Clear();
-    WriteHeader(game);
-    Console.WriteLine();
-
-    var found = false;
-    do
+    for (var (game, customize) = (new Game(wordLength, tries, isRandom, WordList.WordLists[language]), false); true; (game, customize) = (customize ? Start(game) : game.Recreate(), false))
     {
-        var input = Input(game);
-        if (input is null)
-            break;
-        var word = game.Try(input);
-        if (word is null)
-        {
-            Console.WriteLine("Invalid word!");
-            continue;
-        }
-        Console.CursorTop--;
-        Console.Write($"{game.RemainingTries}> ");
-        for (var i = 0; i < word.Length; i++)
-        {
-            var letter = word[i];
-            switch (letter)
-            {
-                case { IsWellPlaced: true }:
-                    Write(letter.Char, WellPlacedColor);
-                    break;
-                case { IsValid: true }:
-                    Write(letter.Char, WronglyPlacedColor);
-                    break;
-                default:
-                    Write(letter.Char, InvalidColor);
-                    break;
-            }
-        }
+        Console.Clear();
+        WriteHeader(game);
         Console.WriteLine();
-        if (word.All([DebuggerStepThrough] static (letter) => letter.IsWellPlaced))
+
+        var found = false;
+        do
         {
-            found = true;
-            Console.WriteLine("Well played");
-            break;
+            var input = Input(game);
+            if (input is null)
+                break;
+            var word = game.Try(input);
+            if (word is null)
+            {
+                Console.WriteLine("Invalid word!");
+                continue;
+            }
+            Console.CursorTop--;
+            Console.Write($"{game.RemainingTries}> ");
+            for (var i = 0; i < word.Length; i++)
+            {
+                var letter = word[i];
+                switch (letter)
+                {
+                    case { IsWellPlaced: true }:
+                        Write(letter.Char, WellPlacedColor);
+                        break;
+                    case { IsValid: true }:
+                        Write(letter.Char, WronglyPlacedColor);
+                        break;
+                    default:
+                        Write(letter.Char, InvalidColor);
+                        break;
+                }
+            }
+            Console.WriteLine();
+            if (word.All([DebuggerStepThrough] static (letter) => letter.IsWellPlaced))
+            {
+                found = true;
+                Console.WriteLine("Well played");
+                break;
+            }
+        } while (game.RemainingTries > 0);
+
+        Console.Write($"The word was ");
+        (var foreground, Console.ForegroundColor) = (Console.ForegroundColor, SelectedWordColor);
+        Console.WriteLine(game.SelectedWord);
+        if (!game.IsRandomWord)
+        {
+            Console.ForegroundColor = SearchingColor;
+            Console.Write("Searching definition on '1mot.net'");
+            (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
+            Console.ForegroundColor = DefinitionColor;
+            foreach (var definition in await GetDefinition(game.SelectedWord))
+                Console.WriteLine("- " + definition.PadRight(minLength, ' '));
         }
-    } while (game.RemainingTries > 0);
+        Console.ForegroundColor = foreground;
 
-    Console.Write($"The word was ");
-    (var foreground, Console.ForegroundColor) = (Console.ForegroundColor, SelectedWordColor);
-    Console.WriteLine(game.SelectedWord);
-    if (!game.IsRandomWord)
-    {
-        Console.ForegroundColor = SearchingColor;
-        Console.Write("Searching definition on '1mot.net'");
-        (var minLength, Console.CursorLeft) = (Console.CursorLeft, 0);
-        Console.ForegroundColor = DefinitionColor;
-        foreach (var definition in await GetDefinition(game.SelectedWord))
-            Console.WriteLine("- " + definition.PadRight(minLength, ' '));
+        PrintScores(game, found);
+
+        Console.WriteLine("Press any key to restart a game, or Esc to customize");
+        if (Console.ReadKey().Key is ConsoleKey.Escape)
+            customize = true;
     }
-    Console.ForegroundColor = foreground;
-
-    PrintScores(game, found);
-
-    Console.WriteLine("Press any key to restart a game, or Esc to customize");
-    if (Console.ReadKey().Key is ConsoleKey.Escape)
-        customize = true;
 }
 
 static void PrintScores(Game game, bool found)
@@ -123,7 +134,7 @@ static async Task<IEnumerable<string>> GetDefinition(string word)
 
 static void WriteHeader(Game game)
 {
-    Console.Write($"{game.WordLength} letters, {game.PossibleTries} tries, ");
+    Console.Write($"{game.WordLength} letters, {game.PossibleTries} tries, {game.CompleteWordList.Name}, ");
     if (game.IsRandomWord)
         Console.Write("Random Word, ");
     for (var letter = 'a'; letter <= 'z'; letter++)
@@ -133,14 +144,21 @@ static void WriteHeader(Game game)
                     : Console.ForegroundColor);
 }
 
-static Game Start()
+static Game Start(Game previous)
 {
     Console.WriteLine("Welcome to Wordle");
 
-    var length = Menu("Select word length", Game.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    var lists = WordList.WordLists.Values switch
+    {
+        IList<WordList> list => list,
+        { } list => list.ToList(),
+    };
+
+    var length = Menu("Select word length", previous.CompleteWordList.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
-    return new(length, tries, isRandom);
+    var language = Menu("Select language", lists, wl => wl.Name);
+    return new(length, tries, isRandom, previous.CompleteWordList);
 }
 
 static string? Input(Game game)
