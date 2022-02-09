@@ -10,8 +10,8 @@ public class Game
     public int WordLength { get; }
     public int PossibleTries { get; }
     public string SelectedWord { get; }
-    public WordList CompleteWordList { get; }
-    public IReadOnlyList<string> WordList { get; }
+    public WordList? CompleteWordList { get; }
+    public IReadOnlyList<string>? WordList { get; }
     public int RemainingTries { get; private set; }
     public (char? wellPlaced, HashSet<char>? invalid)[] PlacedLetters { get; }
     public bool IsRandomWord { get; }
@@ -31,23 +31,23 @@ public class Game
         set => _allScores[(WordLength, PossibleTries)] = value;
     }
 
-    public Game(int wordLength, int possibleTries, bool randomWord, WordList list)
+    public Game(int wordLength, int possibleTries, WordList? list)
     {
-        IsRandomWord = randomWord;
+        IsRandomWord = list is null;
         WordLength = wordLength;
         PossibleTries = possibleTries;
         RemainingTries = PossibleTries;
         PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
         CompleteWordList = list;
-        WordList = CompleteWordList[WordLength];
+        WordList = CompleteWordList?[WordLength];
         SelectedWord = IsRandomWord
             ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(static rng => (char)rng.Next('a', 'z' + 1)))
-            : WordList[new Random().Next(WordList.Count)];
+            : WordList![new Random().Next(WordList.Count)];
         Scores = (Scores.totalGames + 1, Scores.scores);
     }
 
     public Game Recreate()
-        => new(WordLength, PossibleTries, IsRandomWord, CompleteWordList);
+        => new(WordLength, PossibleTries, CompleteWordList);
 
     public bool IsPossibleWord(string word)
         => HasRemainingTries && IsValidWordLength(word) && IsWordInDictionary(word) && IsNotAllSameLetters(word);
@@ -55,7 +55,7 @@ public class Game
     public bool IsValidWordLength(string word)
         => word.Length == WordLength;
     public bool IsWordInDictionary(string word)
-        => IsRandomWord || WordList.Contains(word);
+        => IsRandomWord || WordList!.Contains(word);
     public bool IsNotAllSameLetters(string word)
         => !IsRandomWord || word.Skip(1).Any([DebuggerStepThrough] (l) => l != word[0]);
 
