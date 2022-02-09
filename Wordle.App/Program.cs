@@ -11,10 +11,9 @@ CoconaLiteApp.Run(Run);
 static async Task Run(
     [Argument, Range(3, int.MaxValue)] int wordLength = 5,
     [Argument, Range(4, 10)] int tries = 6,
-    [Option('r')] bool isRandom = false,
     [Argument, IsValidLanguage] string language = "fr")
 {
-    for (var (game, customize) = (new Game(wordLength, tries, isRandom, WordList.WordLists[language]), false); true; (game, customize) = (customize ? Start(game) : game.Recreate(), false))
+    for (var (game, customize) = (new Game(wordLength, tries, WordList.WordLists[language]), false); true; (game, customize) = (customize ? CreateGame() : game.Recreate(), false))
     {
         Console.Clear();
         WriteHeader(game);
@@ -134,9 +133,7 @@ static async Task<IEnumerable<string>> GetDefinition(string word)
 
 static void WriteHeader(Game game)
 {
-    Console.Write($"{game.WordLength} letters, {game.PossibleTries} tries, {game.CompleteWordList.Name}, ");
-    if (game.IsRandomWord)
-        Console.Write("Random Word, ");
+    Console.Write($"{game.WordLength} letters, {game.PossibleTries} tries, {game.CompleteWordList?.Name ?? "Random Word"}, ");
     for (var letter = 'a'; letter <= 'z'; letter++)
         Write(letter, game.PlacedLetters.Any(c => (c.wellPlaced ?? '\0') == letter) ? WellPlacedColor
                     : game.ValidLetters.Contains(letter) ? WronglyPlacedColor
@@ -144,7 +141,7 @@ static void WriteHeader(Game game)
                     : Console.ForegroundColor);
 }
 
-static Game Start(Game previous)
+static Game CreateGame()
 {
     Console.WriteLine("Welcome to Wordle");
 
@@ -154,11 +151,11 @@ static Game Start(Game previous)
         { } list => list.ToList(),
     };
 
-    var length = Menu("Select word length", previous.CompleteWordList.ValidWordLength.ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
-    var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
-    var language = Menu("Select language", lists, wl => wl.Name);
-    return new(length, tries, isRandom, previous.CompleteWordList);
+    var language = isRandom ? null :  Menu("Select language", lists, wl => wl.Name);
+    var length = Menu("Select word length", language?.ValidWordLength.ToArray() ?? Enumerable.Range(4, 17).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
+    return new(length, tries, language);
 }
 
 static string? Input(Game game)
