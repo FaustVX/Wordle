@@ -14,7 +14,7 @@ static async Task Run(
     [Option('r')] bool isRandom = false,
     [Argument, IsValidLanguage] string language = "fr")
 {
-    for (var (game, customize) = (new Game(wordLength, tries, isRandom, WordList.WordLists[language]), false); true; (game, customize) = (customize ? Start(game) : game.Recreate(), false))
+    for (var (game, customize) = (new Game(wordLength, tries, isRandom, false, WordList.WordLists[language]), false); true; (game, customize) = (customize ? Start(game) : game.Recreate(), false))
     {
         Console.Clear();
         WriteHeader(game);
@@ -158,7 +158,8 @@ static Game Start(Game previous)
     var tries = Menu("Select possible tries", Enumerable.Range(4, 7).ToArray(), [DebuggerStepThrough] static (i) => i.ToString());
     var isRandom = Menu("Generate a random word ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
     var language = Menu("Select language", lists, wl => wl.Name);
-    return new(length, tries, isRandom, previous.CompleteWordList);
+    var knownLetters = Menu("Use known letters ?", new[] { false, true }, [DebuggerStepThrough] static (b) => b ? "Yes" : "No");
+    return new(length, tries, isRandom, knownLetters, previous.CompleteWordList);
 }
 
 static string? Input(Game game)

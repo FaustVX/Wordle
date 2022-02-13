@@ -15,6 +15,7 @@ public class Game
     public int RemainingTries { get; private set; }
     public (char? wellPlaced, HashSet<char>? invalid)[] PlacedLetters { get; }
     public bool IsRandomWord { get; }
+    public bool UseKnownLetters { get; }
 
     private readonly HashSet<char> validLetters = new();
     public IReadOnlyCollection<char> ValidLetters => validLetters;
@@ -31,8 +32,9 @@ public class Game
         set => _allScores[(WordLength, PossibleTries)] = value;
     }
 
-    public Game(int wordLength, int possibleTries, bool randomWord, WordList list)
+    public Game(int wordLength, int possibleTries, bool randomWord, bool useKnownLetters, WordList list)
     {
+        this.UseKnownLetters = useKnownLetters;
         IsRandomWord = randomWord;
         WordLength = wordLength;
         PossibleTries = possibleTries;
@@ -47,13 +49,16 @@ public class Game
     }
 
     public Game Recreate()
-        => new(WordLength, PossibleTries, IsRandomWord, CompleteWordList);
+        => new(WordLength, PossibleTries, IsRandomWord, UseKnownLetters, CompleteWordList);
 
     public bool IsPossibleWord(string word)
-        => HasRemainingTries && IsValidWordLength(word) && IsWordInDictionary(word) && IsNotAllSameLetters(word);
+        => HasRemainingTries && IsValidWordLength(word) && DoesUseKnownLetters(word) && IsWordInDictionary(word) && IsNotAllSameLetters(word);
     public bool HasRemainingTries => RemainingTries > 0;
     public bool IsValidWordLength(string word)
         => word.Length == WordLength;
+
+    public bool DoesUseKnownLetters(string word)
+        => UseKnownLetters;
     public bool IsWordInDictionary(string word)
         => IsRandomWord || WordList.Contains(word);
     public bool IsNotAllSameLetters(string word)
