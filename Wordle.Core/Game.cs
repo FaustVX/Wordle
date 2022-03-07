@@ -21,7 +21,7 @@ public class Game : BaseGame
         PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
         SelectedWord = IsRandomWord
             ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(static rng => (char)rng.Next('a', 'z' + 1)))
-            : WordList[new Random().Next(WordList.Count)];
+            : SelectRandomWord();
         Scores = (Scores.totalGames + 1, Scores.scores);
     }
 

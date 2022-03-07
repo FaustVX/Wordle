@@ -27,4 +27,7 @@ public abstract class BaseGame
         WordList = CompleteWordList[WordLength];
         Scores = (Scores.totalGames + 1, Scores.scores);
     }
+
+    protected string SelectRandomWord()
+        => WordList[new Random().Next(WordList.Count)];
 }
