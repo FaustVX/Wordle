@@ -2,19 +2,12 @@
 
 namespace Wordle.Core;
 
-public class Game
+public class Game : BaseGame
 {
-    private static readonly Dictionary<(int wordLength, int maxTries), (int totalGames, int[] scores)> _allScores = new();
     public static IReadOnlyDictionary<(int wordLength, int maxTries), (int totalGames, int[] scores)> AllScores => _allScores;
 
-    public int WordLength { get; }
-    public int PossibleTries { get; }
     public string SelectedWord { get; }
-    public WordList CompleteWordList { get; }
-    public IReadOnlyList<string> WordList { get; }
-    public int RemainingTries { get; private set; }
     public (char? wellPlaced, HashSet<char>? invalid)[] PlacedLetters { get; }
-    public bool IsRandomWord { get; }
 
     private readonly HashSet<char> validLetters = new();
     public IReadOnlyCollection<char> ValidLetters => validLetters;
@@ -22,24 +15,10 @@ public class Game
     private readonly HashSet<char> invalidLetters = new();
     public IReadOnlyCollection<char> InvalidLetters => invalidLetters;
 
-    public (int totalGames, int[] scores) Scores
-    {
-        get => _allScores.TryGetValue((WordLength, PossibleTries), out var value)
-                ? value
-                : (_allScores[(WordLength, PossibleTries)] = (0, new int[PossibleTries]));
-
-        set => _allScores[(WordLength, PossibleTries)] = value;
-    }
-
     public Game(int wordLength, int possibleTries, bool randomWord, WordList list)
+        : base(wordLength, possibleTries, randomWord, list)
     {
-        IsRandomWord = randomWord;
-        WordLength = wordLength;
-        PossibleTries = possibleTries;
-        RemainingTries = PossibleTries;
         PlacedLetters = new (char? wellPlaced, HashSet<char>? invalid)[WordLength];
-        CompleteWordList = list;
-        WordList = CompleteWordList[WordLength];
         SelectedWord = IsRandomWord
             ? string.Concat(Enumerable.Repeat(new Random(), wordLength).Select(static rng => (char)rng.Next('a', 'z' + 1)))
             : WordList[new Random().Next(WordList.Count)];
