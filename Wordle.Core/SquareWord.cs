@@ -10,26 +10,18 @@ public class SquareWord : BaseGame
     public SquareWord(int wordLength, int possibleTries, WordList list)
         : base(wordLength, possibleTries, false, list)
     {
-        do
-        {
-            var rng = new Random();
-            var firstVerticalWord = SelectRandomWord(rng)!;
-            var isOk = TryAddHorizontal(0, ImmutableList.Create(firstVerticalWord), ImmutableList.Create<string>(), out var selectedHorizontalWords, rng);
-            if (isOk)
-            {
-                SelectedWords = selectedHorizontalWords.ToList().AsReadOnly();
-                Grid = new char[WordLength, WordLength];
-                for (int y = 0; y < WordLength; y++)
-                    for (int x = 0; x < WordLength; x++)
-                        Grid[x, y] = SelectedWords[y][x];
-                break;
-            }
-        } while (true);
+        TryAddVertical(0, ImmutableList.Create<string>(), ImmutableList.Create<string>(), out var selectedHorizontalWords, new());
+
+        SelectedWords = selectedHorizontalWords.ToList().AsReadOnly();
+        Grid = new char[WordLength, WordLength];
+        for (int y = 0; y < WordLength; y++)
+            for (int x = 0; x < WordLength; x++)
+                Grid[x, y] = SelectedWords[y][x];
 
         bool TryAddHorizontal(int i, ImmutableList<string> selectedVerticalWords, ImmutableList<string> selectedHorizontalWords, out ImmutableList<string> horizontalWords, Random rng, bool dryRun = false)
         {
             horizontalWords = selectedHorizontalWords;
-            if (!dryRun && !TryAddVertical(i, selectedVerticalWords, selectedHorizontalWords, out _, rng, dryRun: true))
+            if (!dryRun && !TryAddVertical(i + 1, selectedVerticalWords, selectedHorizontalWords, out _, rng, dryRun: true))
                 return false;
 
             var start = string.Concat(selectedVerticalWords.Select(w => w[i]));
