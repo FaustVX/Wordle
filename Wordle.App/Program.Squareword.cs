@@ -1,8 +1,6 @@
 using Wordle.Core;
 using System.Diagnostics;
-using System.IO.Compression;
 using static ConsoleMenu.Helpers;
-using static Wordle.App.Options;
 using Cocona;
 using System.ComponentModel.DataAnnotations;
 
@@ -16,6 +14,7 @@ static partial class Program
         [Argument, IsValidLanguage] string language = "fr",
         int? seed = null)
     {
+        Console.WriteLine("Generation may take a while");
         for (var (game, customize) = (new SquareWord(wordLength, tries, WordList.WordLists[language], seed), false); true; (game, customize) = (customize ? StartSquareword(game) : game.Recreate(), false))
         {
             do
@@ -42,10 +41,13 @@ static partial class Program
                     Console.SetCursorPosition(left, ++top);
                 }
 
+                if (game.RemainingTries <= 0)
+                    break;
+
                 (left, top) = (Console.CursorLeft, Console.CursorTop);
                 for (var input = Console.ReadLine()!; !game.Try(input); input = Console.ReadLine()!)
                     Console.SetCursorPosition(left, top);
-            } while (game.RemainingTries > 0);
+            } while (game.RemainingTries >= 0);
             Console.WriteLine("Game finished");
             Console.ReadLine();
         }

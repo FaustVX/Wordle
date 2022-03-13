@@ -107,17 +107,23 @@ public class SquareWord : BaseGame
 
     public bool Try(string word)
     {
-        if (RemainingTries > 0 || word.Length != WordLength || !WordList.Contains(word))
+        if (RemainingTries < 0 || word.Length != WordLength || !WordList.Contains(word))
             return false;
+
         foreach (var letter in word)
-        {
             if (!SelectedWords.SelectMany(static w => w).Contains(letter))
                 WrongLetters = WrongLetters.Add(letter);
-        }
+
         for (int y = 0; y < WordLength; y++)
         {
             var letterCounts = word.GroupBy(static c => c)
                 .ToDictionary(static g => g.Key, g => word.Count(c => c == g.Key));
+
+            foreach (var letter in word)
+                for (var x = 0; x < WordLength; x++)
+                    if (WellPlacedLetters[x, y] == letter)
+                        letterCounts[letter]--;
+
             for (int x = 0; x < WordLength; x++)
                 if (!WrongLetters.Contains(word[x]) && SelectedWords[y][x] == word[x] && letterCounts.TryGetValue(word[x], out var count) && count > 0)
                 {
@@ -125,6 +131,7 @@ public class SquareWord : BaseGame
                     letterCounts[word[x]]--;
                     WellPlacedLetters[x, y] = word[x];
                 }
+
             for (int x = 0; x < WordLength; x++)
                 if (!WrongLetters.Contains(word[x]) && SelectedWords[y].Contains(word[x]) && letterCounts.TryGetValue(word[x], out var count) && count > 0)
                 {
