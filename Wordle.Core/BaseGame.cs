@@ -28,6 +28,6 @@ public abstract class BaseGame
         Scores = (Scores.totalGames + 1, Scores.scores);
     }
 
-    protected string SelectRandomWord()
-        => WordList[new Random().Next(WordList.Count)];
+    protected string SelectRandomWord(Random? rng = null)
+        => WordList[(rng ?? new()).Next(WordList.Count)];
 }
