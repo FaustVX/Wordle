@@ -25,7 +25,7 @@ public class Game : BaseGame
         Scores = (Scores.totalGames + 1, Scores.scores);
     }
 
-    public Game Recreate()
+    public override Game Recreate()
         => new(WordLength, PossibleTries, IsRandomWord, CompleteWordList);
 
     public bool IsPossibleWord(string word)

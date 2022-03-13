@@ -11,7 +11,11 @@
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
-            "problemMatcher": "$msCompile"
+            "problemMatcher": "$msCompile",
+            "presentation": {
+                "focus": true,
+                "close": true,
+            },
         },
         {
             "label": "publish",
@@ -48,8 +52,12 @@
             "options": {
                 "cwd": "${workspaceFolder}/Wordle.App/bin/${input:Configuration}/net6.0/publish"
             },
-            "problemMatcher": []
-        }
+            "problemMatcher": [],
+            "presentation": {
+                "focus": true,
+                "close": true,
+            },
+        },
     ],
     "inputs": [
         {

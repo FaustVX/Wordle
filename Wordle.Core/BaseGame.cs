@@ -30,4 +30,6 @@ public abstract class BaseGame
 
     protected string SelectRandomWord(Random? rng = null)
         => WordList[(rng ?? new()).Next(WordList.Count)];
+
+    public abstract BaseGame Recreate();
 }
