@@ -28,16 +28,6 @@ public class Game : BaseGame
     public override Game Recreate()
         => new(WordLength, PossibleTries, IsRandomWord, CompleteWordList);
 
-    public bool IsPossibleWord(string word)
-        => HasRemainingTries && IsValidWordLength(word) && IsWordInDictionary(word) && IsNotAllSameLetters(word);
-    public bool HasRemainingTries => RemainingTries > 0;
-    public bool IsValidWordLength(string word)
-        => word.Length == WordLength;
-    public bool IsWordInDictionary(string word)
-        => IsRandomWord || WordList.Contains(word);
-    public bool IsNotAllSameLetters(string word)
-        => !IsRandomWord || word.Skip(1).Any([DebuggerStepThrough] (l) => l != word[0]);
-
     public Letter[]? Try(string word)
     {
         if (!IsPossibleWord(word))

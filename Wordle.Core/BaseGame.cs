@@ -32,4 +32,15 @@ public abstract class BaseGame
         => WordList[(rng ?? new()).Next(WordList.Count)];
 
     public abstract BaseGame Recreate();
+
+    public virtual bool IsPossibleWord(string word)
+        => HasRemainingTries && IsValidWordLength(word) && IsWordInDictionary(word) && IsNotAllSameLetters(word);
+
+    public bool HasRemainingTries => RemainingTries > 0;
+    public bool IsValidWordLength(string word)
+        => word.Length == WordLength;
+    public bool IsWordInDictionary(string word)
+        => IsRandomWord || WordList.Contains(word);
+    public bool IsNotAllSameLetters(string word)
+        => !IsRandomWord || word.Skip(1).Any(l => l != word[0]);
 }
