@@ -8,6 +8,7 @@ public class SquareWord : BaseGame
     public char[,] Grid { get; }
     public IReadOnlyList<string> SelectedWords { get; }
     public char[,] WellPlacedLetters { get; }
+    public ImmutableHashSet<char> FullyPlacedLetters { get; private set; }
     public ImmutableHashSet<char>[] WronglyPlacedLetters { get; }
     public ImmutableHashSet<char> WrongLetters { get; private set; }
     public SquareWord(int wordLength, int possibleTries, WordList list, int? seed)
@@ -17,6 +18,7 @@ public class SquareWord : BaseGame
 
         SelectedWords = selectedHorizontalWords.ToList().AsReadOnly();
         WellPlacedLetters = new char[WordLength, WordLength];
+        FullyPlacedLetters = ImmutableHashSet<char>.Empty;
         WronglyPlacedLetters = new ImmutableHashSet<char>[WordLength];
         WrongLetters = ImmutableHashSet<char>.Empty;
         Grid = new char[WordLength, WordLength];
@@ -122,7 +124,11 @@ public class SquareWord : BaseGame
             foreach (var letter in word)
                 for (var x = 0; x < WordLength; x++)
                     if (WellPlacedLetters[x, y] == letter)
+                    {
                         letterCounts[letter]--;
+                        if (SelectedWords.SelectMany(static w => w).Count(c => c == letter) == WellPlacedLetters.Cast<char>().Count(c => c == letter))
+                            FullyPlacedLetters = FullyPlacedLetters.Add(letter);
+                    }
 
             for (int x = 0; x < WordLength; x++)
                 if (!WrongLetters.Contains(word[x]) && SelectedWords[y][x] == word[x] && letterCounts.TryGetValue(word[x], out var count) && count > 0)

@@ -20,10 +20,9 @@ static partial class Program
             do
             {
                 Console.Clear();
-                Console.ForegroundColor = ConsoleColor.DarkRed;
-                foreach (var letter in game.WrongLetters)
-                    Console.Write(letter);
-                Console.ResetColor();
+                WriteInColor(ConsoleColor.DarkRed, game.WrongLetters);
+                Console.WriteLine("  ");
+                WriteInColor(ConsoleColor.Green, game.FullyPlacedLetters);
                 Console.WriteLine();
 
                 var (left, top) = (Console.CursorLeft, Console.CursorTop);
@@ -34,10 +33,7 @@ static partial class Program
                         Console.Write(game.WellPlacedLetters[x, y] is not '\0' and var l ? l : ' ');
                     Console.ResetColor();
                     Console.Write("  ");
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                    foreach (var letter in game.WronglyPlacedLetters[y])
-                        Console.Write(letter);
-                    Console.ResetColor();
+                    WriteInColor(ConsoleColor.DarkYellow, game.WronglyPlacedLetters[y]);
                     Console.SetCursorPosition(left, ++top);
                 }
 
@@ -50,6 +46,14 @@ static partial class Program
             } while (game.RemainingTries >= 0);
             Console.WriteLine("Game finished");
             Console.ReadLine();
+        }
+
+        static void WriteInColor(ConsoleColor foreground, IEnumerable<char> list)
+        {
+            Console.ForegroundColor = foreground;
+            foreach (var letter in list)
+                Console.Write(letter);
+            Console.ResetColor();
         }
     }
 
