@@ -29,7 +29,7 @@ public class WordList
             .Where([DebuggerStepThrough] static (word) => word.Length >= 3)
             .Select([DebuggerStepThrough] static (word) => word.ToLower())
             .GroupBy([DebuggerStepThrough] static (word) => word.Length)
-            .Select([DebuggerStepThrough] static (group) => (key: group.Key, words: group.ToArray()))
+            .Select([DebuggerStepThrough] static (group) => (key: group.Key, words: group.OrderBy(static w => w).ToArray()))
             .Where([DebuggerStepThrough] static (group) => group.words.Length > 10)
             .OrderBy([DebuggerStepThrough] static (group) => group.key)
             .ToDictionary([DebuggerStepThrough] static (group) => group.key, [DebuggerStepThrough] static (group) => group.words);
